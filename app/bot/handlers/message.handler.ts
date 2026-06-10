@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import { StateMachine } from "@/lib/state-machine";
+import { StateMachine } from "@/lib/StateMachine";
 import { getCommand } from "@/utils/getCommand";
 import { commandRegistry } from "../registries/command.registry";
 import { stateRegistry } from "../registries/state.registry";
@@ -22,13 +22,13 @@ export async function handleMessage(msg: BotContext) {
     return Response.json({ ok: true });
   }
 
-  const state = await StateMachine.get(userId);
+  // const state = await StateMachine.get(userId);
 
-  const stateHandler = stateRegistry[state.step as keyof typeof stateRegistry];
+  // const stateHandler = stateRegistry[state.step as keyof typeof stateRegistry];
 
-  if (stateHandler) {
-    await stateHandler(msg, state);
-  }
+  // if (stateHandler) {
+  //   await stateHandler(msg, state);
+  // }
 
   return Response.json({ ok: true });
 }

@@ -1,4 +1,4 @@
-import { StateMachine } from "@/lib/state-machine";
+import { StateMachine } from "@/lib/StateMachine";
 import { sendMessage } from "@/services/telegram.service";
 
 export async function resetFlow(chatId: number, userId: number) {

@@ -1,4 +1,4 @@
-import { Block, Part } from "@/types/parse-song.type";
+import { Block, Part } from "@/types/parse-song.types";
 
 function parseLine(line: string): Part[] {
   const regex = /\[(.*?)\]/g;

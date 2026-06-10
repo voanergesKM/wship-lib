@@ -9,9 +9,9 @@ export async function POST(req: Request) {
       await handleMessage(update.message);
     }
 
-    if (update.callback_query) {
-      await handleCallback(update.callback_query);
-    }
+    // if (update.callback_query) {
+    //   await handleCallback(update.callback_query);
+    // }
 
     return Response.json({ ok: true });
   } catch (err) {

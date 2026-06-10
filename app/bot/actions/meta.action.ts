@@ -1,5 +1,5 @@
 import { sendMessage } from "@/services/telegram.service";
-import { StateMachine } from "@/lib/state-machine";
+import { StateMachine } from "@/lib/StateMachine";
 import { STATE_STEPS } from "../contsants";
 
 export async function startMetaFlow(

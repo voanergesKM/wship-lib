@@ -1,7 +1,7 @@
 import { saveAssetFromTelegram } from "@/services/saveAssetFromTelegram";
 import { parseTags } from "@/utils/parse-tags";
 import { finishAddFlow } from "../actions";
-import { UserState, StateHandler } from "@/lib/state-machine";
+import { UserState, StateHandler } from "@/lib/StateMachine";
 
 export const awaitingMetaState: StateHandler = async (ctx, state) => {
   const metaState = state as UserState<"awaiting_meta">;

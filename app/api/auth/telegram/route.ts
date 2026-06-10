@@ -78,6 +78,7 @@ export async function PATCH(req: Request) {
       dbUser.firstName = tgUser.first_name || dbUser.firstName;
       dbUser.lastName = tgUser.last_name || dbUser.lastName || null;
       dbUser.languageCode = tgUser.language_code || dbUser.languageCode || null;
+      dbUser.photoUrl = tgUser.photo_url || dbUser.photoUrl;
       if (emailFromTg) dbUser.email = emailFromTg;
 
       await dbUser.save();
@@ -88,6 +89,7 @@ export async function PATCH(req: Request) {
         firstName: tgUser.first_name,
         lastName: tgUser.last_name || null,
         languageCode: tgUser.language_code || null,
+        photoUrl: tgUser.photo_url,
         email: emailFromTg,
       });
     }

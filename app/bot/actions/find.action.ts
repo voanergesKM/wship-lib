@@ -1,4 +1,4 @@
-import { StateMachine } from "@/lib/state-machine";
+import { StateMachine } from "@/lib/StateMachine";
 import { sendMessage } from "@/services/telegram.service";
 import { STATE_STEPS } from "../contsants";
 

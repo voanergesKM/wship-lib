@@ -5,7 +5,7 @@ import { BOT_COMMANDS } from "@/bot/contsants";
 
 export const commandRegistry = {
   [BOT_COMMANDS.START]: startCommand,
-  [BOT_COMMANDS.ADD]: addCommand,
-  [BOT_COMMANDS.RESET]: resetCommand,
-  [BOT_COMMANDS.CANCEL]: resetCommand,
+  // [BOT_COMMANDS.ADD]: addCommand,
+  // [BOT_COMMANDS.RESET]: resetCommand,
+  // [BOT_COMMANDS.CANCEL]: resetCommand,
 };

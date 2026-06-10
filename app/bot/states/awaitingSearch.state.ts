@@ -1,4 +1,4 @@
-import { StateMachine } from "@/lib/state-machine";
+import { StateMachine } from "@/lib/StateMachine";
 import { searchAssets } from "@/services/asset.service";
 import { sendMessage } from "@/services/telegram.service";
 import { searchFlow } from "../actions";

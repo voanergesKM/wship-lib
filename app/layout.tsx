@@ -1,11 +1,9 @@
+import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
-import "./globals.css";
 import { cn } from "@/lib/utils";
-import { ThemeProvider } from "./components/theme-provider";
-import { TelegramProvider } from "./components/TelegramProvider";
-import { AuthProvider } from "./components/AuthContext";
-import TelegramAuth from "./components/TelegramAuth";
+import Providers from "@/components/providers";
+import { Header } from "./components/layout/Header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -42,17 +40,14 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          <TelegramProvider>
-            <AuthProvider>
-              <TelegramAuth />
-              <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background text-foreground">
-                {children}
-              </main>
-            </AuthProvider>
-          </TelegramProvider>
-        </ThemeProvider>
+      <body className="min-h-full flex flex-col bg-background">
+        <Providers>
+          <Header />
+
+          <main className="flex min-h-dvh max-w-[1920px] m-auto w-full flex-col items-center px-4 -mt-14 pt-14 text-foreground">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );

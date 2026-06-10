@@ -3,9 +3,9 @@
 import { useTheme as useNextTheme } from "next-themes";
 
 export function useTheme() {
-  const { theme, setTheme, systemTheme } = useNextTheme();
+  const { theme, setTheme, systemTheme, resolvedTheme } = useNextTheme();
 
   const effectiveTheme = theme === "system" ? systemTheme : theme;
 
-  return { theme, setTheme, effectiveTheme };
+  return { theme, setTheme, effectiveTheme, resolvedTheme };
 }

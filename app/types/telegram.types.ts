@@ -1,6 +1,6 @@
 import { BOT_COMMANDS, MENU_ACTIONS } from "@/bot/contsants";
 import { callbackRegistry } from "@/bot/registries/callback.registry";
-import { Step } from "@/lib/state-machine";
+import { Step } from "@/lib/StateMachine";
 
 export type TelegramChat = {
   id: number;

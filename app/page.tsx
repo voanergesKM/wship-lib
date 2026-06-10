@@ -1,35 +1,38 @@
-"use client";
+import { Suspense } from "react";
+import { SongsList } from "./components/HomePage/SongsList";
+import { songsListOptions } from "./lib/queries/songQueries";
+import { getQueryClient } from "./lib/queryClient";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { SearchSong } from "./components/HomePage/SearchSong";
 
-import { useAuth } from "./components/AuthContext";
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ search: string; page: string; limit: string }>;
+}) {
+  const queryClient = getQueryClient();
 
-export default function Home() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { search, page, limit } = await searchParams;
+
+  await queryClient.prefetchQuery(
+    songsListOptions({
+      page: +page || 1,
+      limit: +limit || 10,
+      search: search || "",
+    }),
+  );
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-4">Каталог ресурсів</h1>
-      <p className="text-gray-400 mb-8">
-        Ця сторінка доступна всім користувачам без авторизації.
-      </p>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="flex justify-between gap-2 items-center mb-4">
+        <SearchSong />
+      </div>
 
-      {isLoading ? (
-        <p className="text-sm text-gray-500">Завантаження профілю...</p>
-      ) : isAuthenticated && user ? (
-        <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
-          <p>
-            Ви увійшли як:{" "}
-            <span className="font-bold text-green-400">{user.firstName}</span>
-          </p>
-        </div>
-      ) : (
-        <div className="p-4 bg-yellow-950/20 border border-yellow-500/30 rounded-xl text-center space-y-3">
-          <p className="text-yellow-400">Ви переглядаєте сайт як гість.</p>
-          {/* Коли додасте Google Auth, тут буде просто кнопка "Увійти через Google" */}
-          <button className="px-4 py-2 bg-white text-black font-medium rounded-lg text-sm">
-            Увійти через Google (Скоро)
-          </button>
-        </div>
-      )}
-    </>
+      <h1 className="text-3xl font-bold mb-4">Каталог ресурсів</h1>
+
+      <Suspense fallback={<div>Завантаження...</div>}>
+        <SongsList />
+      </Suspense>
+    </HydrationBoundary>
   );
 }

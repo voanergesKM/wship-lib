@@ -4,7 +4,7 @@ import {
   awaitingMetaState,
 } from "../states";
 import { STATE_STEPS } from "../contsants";
-import { ActiveStep, StateHandler } from "@/lib/state-machine";
+import { ActiveStep, StateHandler } from "@/lib/StateMachine";
 
 export const stateRegistry: Record<ActiveStep, StateHandler> = {
   [STATE_STEPS.AWAITING_PHOTO]: awaitingPhotoState,
