@@ -46,10 +46,12 @@ export async function PATCH(req: Request) {
     }
 
     let tgUser: any = null;
+
     if (isDevMock) {
       tgUser = { id: 99999, first_name: "John", username: "testuser" };
     } else {
       const userRaw = params.get("user");
+
       if (!userRaw)
         return NextResponse.json(
           { error: "User data missing" },
@@ -83,15 +85,17 @@ export async function PATCH(req: Request) {
 
       await dbUser.save();
     } else {
-      dbUser = await User.create({
+      const payload = {
         telegramId: String(tgUser.id),
         username: tgUser.username || null,
         firstName: tgUser.first_name,
         lastName: tgUser.last_name || null,
         languageCode: tgUser.language_code || null,
         photoUrl: tgUser.photo_url,
-        email: emailFromTg,
-      });
+        ...(emailFromTg ? { email: emailFromTg } : {}),
+      };
+
+      dbUser = await User.create(payload);
     }
 
     const jwtSecret = new TextEncoder().encode(process.env.JWT_SECRET);
