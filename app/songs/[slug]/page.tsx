@@ -2,6 +2,7 @@ import { getQueryClient } from "@/lib/queryClient";
 import { songOptions } from "@/lib/queries/songQueries";
 import { dehydrate, HydrationBoundary, useQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
+import { PageLoader } from "@/components/shared/PageLoader";
 import { SongPage } from "./SongPage";
 
 export default async function Page({
@@ -16,7 +17,7 @@ export default async function Page({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<PageLoader />}>
         <SongPage slug={slug} />
       </Suspense>
     </HydrationBoundary>

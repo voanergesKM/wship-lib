@@ -3,6 +3,7 @@
 import React, { Suspense } from "react";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import { PageLoader } from "./PageLoader";
 
 interface QueryBoundaryProps {
   children: React.ReactNode;
@@ -10,11 +11,6 @@ interface QueryBoundaryProps {
   errorFallback?: (props: FallbackProps) => React.ReactNode;
 }
 
-const DefaultLoading = () => (
-  <div className="w-full p-6 text-center text-muted-foreground animate-pulse">
-    Завантаження даних...
-  </div>
-);
 
 const DefaultErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
   <div className="p-4 bg-destructive/10 text-destructive rounded-lg border border-destructive/20 text-center">
@@ -34,7 +30,7 @@ const DefaultErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
 
 export const QueryBoundary = ({
   children,
-  loadingFallback = <DefaultLoading />,
+  loadingFallback = <PageLoader size="sm" />,
   errorFallback,
 }: QueryBoundaryProps) => {
   return (

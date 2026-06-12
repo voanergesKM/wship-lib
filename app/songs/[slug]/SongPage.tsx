@@ -6,6 +6,7 @@ import { Edit3, Eye, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/shared/PageLoader";
 import { songOptions } from "@/lib/queries/songQueries";
 import {
   SongPayload,
@@ -53,7 +54,7 @@ export function SongPage({ slug }: { slug: string }) {
     },
   });
 
-  if (isLoading) return <div>Завантаження...</div>;
+  if (isLoading) return <PageLoader />;
 
   if (!data) return <div>Song not found</div>;
 

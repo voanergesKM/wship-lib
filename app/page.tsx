@@ -4,6 +4,7 @@ import { songsListOptions } from "./lib/queries/songQueries";
 import { getQueryClient } from "./lib/queryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { SearchSong } from "./components/HomePage/SearchSong";
+import { PageLoader } from "./components/shared/PageLoader";
 
 export default async function Home({
   searchParams,
@@ -27,7 +28,7 @@ export default async function Home({
       <div className="flex flex-col w-full items-center gap-6">
         <SearchSong />
 
-        <Suspense fallback={<div>Завантаження...</div>}>
+        <Suspense fallback={<PageLoader />}>
           <SongsList />
         </Suspense>
       </div>
