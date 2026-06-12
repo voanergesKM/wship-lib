@@ -1,9 +1,7 @@
 import { getQueryClient } from "@/lib/queryClient";
-import { songOptions } from "@/lib/queries/songQueries";
-import { dehydrate, HydrationBoundary, useQuery } from "@tanstack/react-query";
-import { Suspense } from "react";
-import { PageLoader } from "@/components/shared/PageLoader";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { SongPage } from "./SongPage";
+import { getSongBySlug } from "@/lib/data/songs";
 
 export default async function Page({
   params,
@@ -13,13 +11,18 @@ export default async function Page({
   const { slug } = await params;
   const queryClient = getQueryClient();
 
-  // await queryClient.prefetchQuery(songOptions({ slug: slug }));
+  await queryClient.prefetchQuery({
+    queryKey: ["song", slug],
+    queryFn: async () => {
+      const song = await getSongBySlug(slug);
+
+      return JSON.parse(JSON.stringify(song));
+    },
+  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<PageLoader />}>
-        <SongPage slug={slug} />
-      </Suspense>
+      <SongPage slug={slug} />
     </HydrationBoundary>
   );
 }

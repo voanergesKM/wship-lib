@@ -63,6 +63,7 @@ const SongSchema = new Schema(
     youtube: {
       type: [
         {
+          _id: false,
           videoId: String,
           url: String,
         },

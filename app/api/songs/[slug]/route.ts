@@ -1,3 +1,4 @@
+import { getSongBySlug } from "@/lib/data/songs";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
 import { Song } from "@/models/Song";
@@ -10,9 +11,7 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  await connectDB();
-
-  const song = await Song.findOne({ slug });
+  const song = await getSongBySlug(slug);
 
   if (!song) {
     return NextResponse.json({ error: " пісню не знайдено" }, { status: 404 });
