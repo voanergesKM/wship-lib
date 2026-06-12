@@ -6,8 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Search } from "lucide-react";
 
-import { Input } from "../ui/input";
 import { useDebouncedValue } from "@/hooks/useDebounce";
+import { FieldInput } from "../shared/FieldInput";
 
 export const SearchSong = () => {
   const router = useRouter();
@@ -45,16 +45,14 @@ export const SearchSong = () => {
   };
 
   return (
-    <div className="relative mx-auto my-4 w-full max-w-lg">
-      <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-5 w-5" />
-
-      <Input
-        value={value}
-        onChange={handleChange}
-        type="text"
-        placeholder="Пошук пісні"
-        className="w-full pl-9"
-      />
-    </div>
+    <FieldInput
+      id="search-song"
+      value={value}
+      onChange={handleChange}
+      placeholder="Пошук"
+      className="w-full max-w-xl"
+      startAdornment={<Search className="w-4 h-4" />}
+      description="Введіть назву пісні, автора або тег"
+    />
   );
 };

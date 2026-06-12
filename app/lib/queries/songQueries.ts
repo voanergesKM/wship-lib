@@ -14,3 +14,10 @@ export const songsListOptions = ({ page = 1, limit = 10, search = "" }) =>
         signal,
       ),
   });
+
+export const songOptions = ({ slug }: { slug: string }) =>
+  queryOptions({
+    queryKey: ["song", slug],
+    queryFn: async ({ signal }: QueryFunctionContext) =>
+      songsService.getSongBySlug(slug, signal),
+  });

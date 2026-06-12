@@ -3,16 +3,20 @@
 import { useAuth } from "../providers/AuthContext";
 import ThemeToggle from "../ToggleTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 export const Header = () => {
   const { user } = useAuth();
   return (
     <header className="flex sticky top-0 z-50 h-14 w-full bg-background/50 backdrop-blur-sm items-center justify-between  py-3 border-b">
       <div className="text-lg font-semibold w-full max-w-[1920px] m-auto px-4 flex gap-2 items-center justify-between">
-        <span />
+        <div>
+          <BackButton />
+        </div>
+
         <div className="flex gap-2 items-center">
           <ThemeToggle />
 
@@ -40,3 +44,33 @@ export const Header = () => {
     </header>
   );
 };
+
+export function BackButton() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleClick = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.replace("/");
+  };
+
+  if (pathname === "/") {
+    return null;
+  }
+
+  return (
+    <Button
+      type="button"
+      onClick={handleClick}
+      variant={"ghost"}
+      size="icon"
+      // className="text-sm text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft />
+    </Button>
+  );
+}

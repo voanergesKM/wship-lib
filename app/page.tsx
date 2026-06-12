@@ -24,15 +24,13 @@ export default async function Home({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex justify-between gap-2 items-center mb-4">
+      <div className="flex flex-col w-full items-center gap-6">
         <SearchSong />
+
+        <Suspense fallback={<div>Завантаження...</div>}>
+          <SongsList />
+        </Suspense>
       </div>
-
-      <h1 className="text-3xl font-bold mb-4">Каталог ресурсів</h1>
-
-      <Suspense fallback={<div>Завантаження...</div>}>
-        <SongsList />
-      </Suspense>
     </HydrationBoundary>
   );
 }
