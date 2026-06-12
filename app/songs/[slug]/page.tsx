@@ -13,7 +13,7 @@ export default async function Page({
   const { slug } = await params;
   const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery(songOptions({ slug: slug }));
+  // await queryClient.prefetchQuery(songOptions({ slug: slug }));
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

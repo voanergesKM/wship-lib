@@ -15,13 +15,13 @@ export default async function Home({
 
   const { search, page, limit } = await searchParams;
 
-  await queryClient.prefetchQuery(
-    songsListOptions({
-      page: +page || 1,
-      limit: +limit || 10,
-      search: search || "",
-    }),
-  );
+  // await queryClient.prefetchQuery(
+  //   songsListOptions({
+  //     page: +page || 1,
+  //     limit: +limit || 10,
+  //     search: search || "",
+  //   }),
+  // );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
