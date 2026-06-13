@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { parseSong } from "@/utils/parseSong";
-import { EyeIcon, ImageMinus, ImagePlus, ListFilter } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { transposeContent } from "@/utils/chordTransposition";
+import { EyeIcon, ImageMinus, ImagePlus, ListFilter, ArrowUp, ArrowDown } from "lucide-react";
+import { ReactNode, useState, useMemo } from "react";
 
 type Props = {
   content: string;
@@ -23,10 +24,15 @@ export function SongPreview({
   chordColor = "#22c55e",
   dialogTrigger,
 }: Props) {
-  const blocks = parseSong(content);
-
   const [showChords, setShowChords] = useState(true);
   const [fontSize, setFontSize] = useState(14);
+  const [transposeSemitones, setTransposeSemitones] = useState(0);
+
+  const transposedContent = useMemo(() => {
+    return transposeSemitones === 0 ? content : transposeContent(content, transposeSemitones);
+  }, [content, transposeSemitones]);
+
+  const blocks = parseSong(transposedContent);
 
   const handleToggleChords = () => {
     setShowChords((prev) => !prev);
@@ -38,6 +44,18 @@ export function SongPreview({
 
   const handleFontSizeDown = () => {
     setFontSize((prev) => prev - 2);
+  };
+
+  const handleTransposeUp = () => {
+    setTransposeSemitones((prev) => prev + 1);
+  };
+
+  const handleTransposeDown = () => {
+    setTransposeSemitones((prev) => prev - 1);
+  };
+
+  const handleResetTranspose = () => {
+    setTransposeSemitones(0);
   };
 
   return (
@@ -56,6 +74,10 @@ export function SongPreview({
             onToggleChords={handleToggleChords}
             onFontSizeUp={handleFontSizeUp}
             onFontSizeDown={handleFontSizeDown}
+            onTransposeUp={handleTransposeUp}
+            onTransposeDown={handleTransposeDown}
+            onResetTranspose={handleResetTranspose}
+            transposeSemitones={transposeSemitones}
           />
           <DialogTitle hidden>Перегляд пісні</DialogTitle>
           <DialogDescription hidden>Перегляд пісні</DialogDescription>
@@ -137,10 +159,18 @@ function Controls({
   onToggleChords,
   onFontSizeUp,
   onFontSizeDown,
+  onTransposeUp,
+  onTransposeDown,
+  onResetTranspose,
+  transposeSemitones,
 }: {
   onToggleChords: () => void;
   onFontSizeUp: () => void;
   onFontSizeDown: () => void;
+  onTransposeUp: () => void;
+  onTransposeDown: () => void;
+  onResetTranspose: () => void;
+  transposeSemitones: number;
 }) {
   return (
     <div className="flex items-center gap-4">
@@ -154,6 +184,23 @@ function Controls({
       <Button size={"icon-xs"} onClick={onFontSizeDown}>
         <ImageMinus />
       </Button>
+
+      <div className="flex items-center gap-2 border-l pl-4">
+        <Button size={"icon-xs"} onClick={onTransposeDown}>
+          <ArrowDown />
+        </Button>
+        <span className="text-sm font-mono w-8 text-center">
+          {transposeSemitones > 0 ? `+${transposeSemitones}` : transposeSemitones}
+        </span>
+        <Button size={"icon-xs"} onClick={onTransposeUp}>
+          <ArrowUp />
+        </Button>
+        {transposeSemitones !== 0 && (
+          <Button size={"icon-xs"} variant="ghost" onClick={onResetTranspose}>
+            ×
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
