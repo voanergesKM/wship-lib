@@ -6,12 +6,12 @@ import { useTelegramContext } from "./TelegramProvider";
 import { useAuth } from "./AuthContext";
 
 export default function TelegramAuth() {
-  const { isMock } = useTelegramContext();
+  // const { isMock } = useTelegramContext();
   const { isAuthenticated, refreshUser } = useAuth();
   const hasAttempted = useRef(false);
 
   useEffect(() => {
-    if (isMock || isAuthenticated || hasAttempted.current) return;
+    if (isAuthenticated || hasAttempted.current) return;
 
     try {
       let initDataRaw = "";
@@ -66,7 +66,7 @@ export default function TelegramAuth() {
     } catch (e) {
       console.error("❌ [Bg Auth]: Failed to initialize", e);
     }
-  }, [isMock, isAuthenticated, refreshUser]);
+  }, [isAuthenticated, refreshUser]);
 
   return null;
 }

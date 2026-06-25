@@ -6,58 +6,85 @@ import { User } from "@/models/User";
 
 export async function PATCH(req: Request) {
   try {
-    const { initData } = await req.json();
+    const body = await req.json();
+    const { initData, widgetData } = body;
 
-    if (!initData) {
+    if (!initData && !widgetData) {
       return NextResponse.json(
-        { error: "Parameter initData is missing" },
+        { error: "Authentication data is missing" },
         { status: 400 },
       );
     }
 
-    const params = new URLSearchParams(initData);
-    const hash = params.get("hash");
-    params.delete("hash");
-    params.sort();
-
-    const dataCheckString = Array.from(params.entries())
-      .map(([key, value]) => `${key}=${decodeURIComponent(value)}`)
-      .join("\n");
-
-    const secretKey = crypto
-      .createHmac("sha256", "WebAppData")
-      .update(process.env.BOT_TOKEN || "")
-      .digest();
-
-    const calculatedHash = crypto
-      .createHmac("sha256", secretKey)
-      .update(dataCheckString)
-      .digest("hex");
-
+    let tgUser: any = null;
     const isDevMock =
       process.env.NODE_ENV === "development" &&
-      (initData.includes("mock") || !hash);
-
-    if (calculatedHash !== hash && !isDevMock) {
-      return NextResponse.json(
-        { error: "Invalid authentication hash" },
-        { status: 401 },
-      );
-    }
-
-    let tgUser: any = null;
+      initData &&
+      (initData.includes("mock") || !new URLSearchParams(initData).get("hash"));
 
     if (isDevMock) {
       tgUser = { id: 99999, first_name: "John", username: "testuser" };
-    } else {
-      const userRaw = params.get("user");
+    } else if (initData) {
+      // Validate WebApp initData
+      const params = new URLSearchParams(initData);
+      const hash = params.get("hash");
+      params.delete("hash");
+      params.sort();
 
-      if (!userRaw)
+      const dataCheckString = Array.from(params.entries())
+        .map(([key, value]) => `${key}=${decodeURIComponent(value)}`)
+        .join("\n");
+
+      const secretKey = crypto
+        .createHmac("sha256", "WebAppData")
+        .update(process.env.BOT_TOKEN || "")
+        .digest();
+
+      const calculatedHash = crypto
+        .createHmac("sha256", secretKey)
+        .update(dataCheckString)
+        .digest("hex");
+
+      if (calculatedHash !== hash) {
+        return NextResponse.json(
+          { error: "Invalid authentication hash" },
+          { status: 401 },
+        );
+      }
+
+      const userRaw = params.get("user");
+      if (!userRaw) {
         return NextResponse.json(
           { error: "User data missing" },
           { status: 400 },
         );
+      }
       tgUser = JSON.parse(userRaw);
+    } else if (widgetData) {
+      // Validate Telegram Login Widget data
+      const { hash, ...data } = widgetData;
+      const dataCheckString = Object.keys(data)
+        .sort()
+        .map((key) => `${key}=${data[key]}`)
+        .join("\n");
+
+      const secretKey = crypto
+        .createHash("sha256")
+        .update(process.env.BOT_TOKEN || "")
+        .digest();
+
+      const calculatedHash = crypto
+        .createHmac("sha256", secretKey)
+        .update(dataCheckString)
+        .digest("hex");
+
+      if (calculatedHash !== hash) {
+        return NextResponse.json(
+          { error: "Invalid widget authentication hash" },
+          { status: 401 },
+        );
+      }
+      tgUser = widgetData;
     }
 
     const emailFromTg = tgUser.email ? tgUser.email.toLowerCase().trim() : null;

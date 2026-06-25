@@ -13,13 +13,13 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TelegramProvider>
-          <AuthProvider>
-            <TelegramAuth />
+        {/* <TelegramProvider> */}
+        <AuthProvider>
+          <TelegramAuth />
 
-            {children}
-          </AuthProvider>
-        </TelegramProvider>
+          {children}
+        </AuthProvider>
+        {/* </TelegramProvider> */}
       </ThemeProvider>
     </QueryClientProvider>
   );
