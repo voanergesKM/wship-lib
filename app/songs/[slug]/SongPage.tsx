@@ -19,6 +19,7 @@ import {
 } from "@/utils/youtubeLinks";
 import { SongEditForm } from "../_components/SongEditForm";
 import { SongView } from "../_components/SongView";
+import { useAuth } from "@/components/providers/AuthContext";
 
 export function SongPage({ slug }: { slug: string }) {
   const router = useRouter();
@@ -26,6 +27,8 @@ export function SongPage({ slug }: { slug: string }) {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [error, setError] = useState<string | null>(null);
   const { data, isLoading } = useQuery(songOptions({ slug }));
+
+  const { user } = useAuth();
 
   const { mutateAsync: updateSong } = useMutation({
     mutationFn: (payload: SongPayload) => songsService.update(slug, payload),
@@ -61,6 +64,8 @@ export function SongPage({ slug }: { slug: string }) {
   const youtube = normalizeYouTubeLinks(data.youtube);
   const visibility = (data.visibility ?? "public") as SongVisibility;
 
+  const canEdit = data.createdBy === user?.id || user?.role === "admin";
+
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -78,12 +83,14 @@ export function SongPage({ slug }: { slug: string }) {
           <h1 className="text-3xl font-bold tracking-normal">{data.title}</h1>
         </div>
 
-        {mode === "view" ? (
+        {mode === "view" && canEdit && (
           <Button type="button" onClick={() => setMode("edit")}>
             <Edit3 />
             Редагувати
           </Button>
-        ) : (
+        )}
+
+        {mode === "edit" && canEdit && (
           <Button
             type="button"
             variant="outline"

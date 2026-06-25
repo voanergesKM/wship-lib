@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../providers/AuthContext";
 import ThemeToggle from "../ToggleTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, LogOut, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -13,12 +13,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../ui/popover";
+import { Separator } from "../ui/separator";
 import { TelegramDesktopLogin } from "../ui/telegram-desktop-login";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 export const Header = () => {
-  const { user, isAuthenticated, isLoading, refreshUser } = useAuth();
+  const { user, isAuthenticated, isLoading, refreshUser, logout } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   return (
@@ -44,14 +50,45 @@ export const Header = () => {
 
           {!isLoading &&
             (isAuthenticated ? (
-              <Avatar aria-label="User profile">
-                <AvatarImage
-                  src={user?.photoUrl || ""}
-                  alt={user?.firstName || ""}
-                  className="grayscale"
-                />
-                <AvatarFallback>{user?.firstName?.[0] || "?"}</AvatarFallback>
-              </Avatar>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Avatar aria-label="User profile">
+                      <AvatarImage
+                        src={user?.photoUrl || ""}
+                        alt={user?.firstName || ""}
+                        className="grayscale"
+                      />
+                      <AvatarFallback>
+                        {user?.firstName?.[0] || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-56 p-2">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{user?.firstName}</p>
+                    {user?.username && (
+                      <p className="text-xs text-muted-foreground">
+                        @{user.username}
+                      </p>
+                    )}
+                  </div>
+                  <Separator className="my-1" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-destructive hover:text-destructive"
+                    onClick={logout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Вийти
+                  </Button>
+                </PopoverContent>
+              </Popover>
             ) : (
               <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
                 <DialogTrigger asChild>
