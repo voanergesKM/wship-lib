@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "./button";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -17,44 +17,56 @@ export function TelegramDesktopLogin({
   const [authCode, setAuthCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const onAuthRef = useRef(onAuth);
+  onAuthRef.current = onAuth;
 
+  // Effect 1: Generate auth code once on mount
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    let isActive = true;
+    let cancelled = false;
 
-    const initAuth = async () => {
+    const generateCode = async () => {
       try {
         const res = await fetch("/api/auth/telegram/desktop/generate");
         const data = await res.json();
-        
-        if (data.success && isActive) {
+
+        if (!cancelled && data.success) {
           setAuthCode(data.code);
           setLoading(false);
-        } else {
+        } else if (!cancelled) {
           throw new Error("Failed to generate code");
         }
-      } catch (err) {
-        if (isActive) {
+      } catch {
+        if (!cancelled) {
           setError("Помилка ініціалізації авторизації.");
           setLoading(false);
         }
       }
     };
 
-    initAuth();
+    generateCode();
 
-    // Poll for status
-    interval = setInterval(async () => {
-      if (!authCode) return;
+    return () => {
+      cancelled = true;
+    };
+  }, []); // Runs once on mount only
 
+  // Effect 2: Start polling only when authCode is available
+  useEffect(() => {
+    if (!authCode) return;
+
+    let cancelled = false;
+
+    const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/auth/telegram/desktop/status?code=${authCode}`);
+        const res = await fetch(
+          `/api/auth/telegram/desktop/status?code=${authCode}`
+        );
         if (!res.ok) return;
 
         const data = await res.json();
-        if (data.success && data.status === "completed") {
+        if (data.success && data.status === "completed" && !cancelled) {
           clearInterval(interval);
-          if (isActive) onAuth();
+          onAuthRef.current();
         }
       } catch (e) {
         console.error("Polling error", e);
@@ -62,10 +74,10 @@ export function TelegramDesktopLogin({
     }, 2500);
 
     return () => {
-      isActive = false;
+      cancelled = true;
       clearInterval(interval);
     };
-  }, [authCode, onAuth]);
+  }, [authCode]); // Runs once when authCode is set
 
   if (loading) {
     return (
@@ -105,7 +117,8 @@ export function TelegramDesktopLogin({
         </Link>
       </Button>
       <p className="text-xs text-muted-foreground text-center px-4">
-        Натисніть кнопку, щоб перейти в бота. Натисніть "Start" (або "Розпочати") у боті для підтвердження.
+        Натисніть кнопку, щоб перейти в бота. Натисніть &quot;Start&quot; (або
+        &quot;Розпочати&quot;) у боті для підтвердження.
       </p>
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
