@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { TelegramLoginWidget } from "../ui/telegram-login";
+import { TelegramDesktopLogin } from "../ui/telegram-desktop-login";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -71,31 +71,14 @@ export const Header = () => {
                       функцій.
                     </p>
 
-                    <TelegramLoginWidget
+                    <TelegramDesktopLogin
                       botName={
                         process.env.NEXT_PUBLIC_BOT_USERNAME ||
                         "voanergesKM_bot"
                       }
-                      buttonSize="large"
-                      cornerRadius={8}
-                      onAuth={async (telegramUser) => {
-                        try {
-                          const response = await fetch("/api/auth/telegram", {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ widgetData: telegramUser }),
-                          });
-                          const data = await response.json();
-                          if (data.success) {
-                            setIsLoginOpen(false);
-                            // Refresh auth state globally
-                            await refreshUser();
-                          } else {
-                            console.error("Auth failed", data.error);
-                          }
-                        } catch (err) {
-                          console.error("Login error:", err);
-                        }
+                      onAuth={async () => {
+                        setIsLoginOpen(false);
+                        await refreshUser();
                       }}
                     />
                   </div>
