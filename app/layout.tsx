@@ -20,6 +20,28 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Worship Library",
   description: "Бібліотека християнських пісень",
+  openGraph: {
+    title: "Worship Library",
+    description: "Бібліотека християнських пісень",
+    url: "https://worship-library.vercel.app",
+    siteName: "Worship Library",
+    images: [
+      {
+        url: "/web-app-manifest-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "Worship Library",
+      },
+    ],
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Worship Library",
+    description: "Бібліотека християнських пісень",
+    images: ["/web-app-manifest-512"],
+  },
 };
 
 export default function RootLayout({
