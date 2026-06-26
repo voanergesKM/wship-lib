@@ -30,7 +30,15 @@ export const Header = () => {
   return (
     <header className="flex sticky top-0 z-50 h-14 w-full bg-background/50 backdrop-blur-sm items-center justify-between  py-3 border-b">
       <div className="text-lg font-semibold w-full max-w-[1920px] m-auto px-4 flex gap-2 items-center justify-between">
-        <div>
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img 
+              src="/logo.svg" 
+              alt="Worship Library" 
+              className="w-8 h-8 dark:invert dark:brightness-100 dark:contrast-100"
+            />
+            <span className="hidden sm:inline">Worship Library</span>
+          </Link>
           <BackButton />
         </div>
 
