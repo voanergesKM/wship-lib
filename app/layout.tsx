@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_WEBAPP_URL! || "http://localhost:3000",
+  ),
   title: "Worship Library",
   description: "Бібліотека християнських пісень",
   openGraph: {
@@ -40,7 +43,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Worship Library",
     description: "Бібліотека християнських пісень",
-    images: ["/web-app-manifest-512"],
+    images: [
+      `${process.env.NEXT_PUBLIC_WEBAPP_URL!}/web-app-manifest-512x512.png`,
+    ],
   },
 };
 
