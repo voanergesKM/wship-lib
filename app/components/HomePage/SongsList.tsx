@@ -2,17 +2,7 @@
 
 import { useSongsList } from "@/hooks/useSongsList";
 import { useAuth } from "../providers/AuthContext";
-
-import { Button } from "@/components/ui/button";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
-import Link from "next/link";
+import { SongItem } from "./SongItem";
 
 export const SongsList = () => {
   const { data, isLoadingSongs } = useSongsList();
@@ -30,22 +20,10 @@ export const SongsList = () => {
   }
 
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-[auto,1fr,auto] gap-4 items-center">
+    <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {data?.data.map((song) => (
         <li key={song._id.toString()}>
-          <Link href={`/songs/${song.slug}`}>
-            <Item variant="outline">
-              <ItemContent>
-                <ItemTitle>{song.title}</ItemTitle>
-                <ItemDescription>{song.tags?.join(", ")}</ItemDescription>
-              </ItemContent>
-              {/* <ItemActions>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/songs/${song.slug}`}>Переглянути</Link>
-                </Button>
-              </ItemActions> */}
-            </Item>
-          </Link>
+          <SongItem song={song} />
         </li>
       ))}
     </ul>
