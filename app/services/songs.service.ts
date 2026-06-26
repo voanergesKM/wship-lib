@@ -23,7 +23,12 @@ export interface SongParams {
 
 export interface PaginatedSongsList {
   data: SongDocument[];
-  total: number;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export const songsService = {

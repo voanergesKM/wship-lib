@@ -44,7 +44,7 @@ export default function RootLayout({
         <Providers>
           <Header />
 
-          <main className="flex min-h-dvh max-w-[1920px] m-auto w-full flex-col items-center px-4 -mt-14 pt-18 text-foreground">
+          <main className="flex min-h-dvh max-w-[1920px] m-auto w-full flex-col items-center px-4 -mt-14 pt-18 text-foreground pb-10">
             {children}
           </main>
         </Providers>
