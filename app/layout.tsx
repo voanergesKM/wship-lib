@@ -17,22 +17,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_URL = new URL(
+  process.env.NEXT_PUBLIC_WEBAPP_URL! || "http://localhost:3000",
+);
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_WEBAPP_URL! || "http://localhost:3000",
-  ),
+  metadataBase: APP_URL,
   title: "Worship Library",
   description: "Бібліотека християнських пісень",
   openGraph: {
     title: "Worship Library",
     description: "Бібліотека християнських пісень",
-    url: "https://worship-library.vercel.app",
+    url: APP_URL,
     siteName: "Worship Library",
     images: [
       {
-        url: "/web-app-manifest-512x512.png",
-        width: 512,
-        height: 512,
+        url: "/opengraph-image.webp",
+        width: 1200,
+        height: 630,
         alt: "Worship Library",
       },
     ],
@@ -44,7 +46,12 @@ export const metadata: Metadata = {
     title: "Worship Library",
     description: "Бібліотека християнських пісень",
     images: [
-      `${process.env.NEXT_PUBLIC_WEBAPP_URL!}/web-app-manifest-512x512.png`,
+      {
+        url: "/opengraph-image.webp",
+        width: 1200,
+        height: 630,
+        alt: "Worship Library",
+      },
     ],
   },
 };
