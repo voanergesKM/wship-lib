@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -20,9 +20,31 @@ export const SearchSong = () => {
 
   const [value, setValue] = useState(searchQuery);
 
+  const previousSearchQueryRef = useRef(searchQuery);
+
+  const isSyncingFromUrlRef = useRef(false);
+
   const debouncedValue = useDebouncedValue(value, 500);
 
   useEffect(() => {
+    if (previousSearchQueryRef.current === searchQuery) {
+      return;
+    }
+
+    previousSearchQueryRef.current = searchQuery;
+    isSyncingFromUrlRef.current = true;
+    setValue(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (isSyncingFromUrlRef.current) {
+      if (debouncedValue === searchQuery) {
+        isSyncingFromUrlRef.current = false;
+      }
+
+      return;
+    }
+
     const current = searchParams.get("search") ?? "";
 
     if (current === debouncedValue) {
@@ -40,9 +62,10 @@ export const SearchSong = () => {
     params.set("page", "1");
 
     router.replace(`${pathname}?${params.toString()}`);
-  }, [debouncedValue, pathname, router]);
+  }, [debouncedValue, pathname, router, searchParams, searchQuery]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isSyncingFromUrlRef.current = false;
     setValue(e.target.value);
   };
 

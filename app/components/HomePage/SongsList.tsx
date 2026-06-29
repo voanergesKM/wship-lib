@@ -1,7 +1,6 @@
 "use client";
 
 import { useSongsList } from "@/hooks/useSongsList";
-import { useAuth } from "../providers/AuthContext";
 import { SongItem } from "./SongItem";
 import {
   Pagination,
@@ -12,20 +11,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useSearchParams, useRouter } from "next/navigation";
-import { PageLoader } from "../shared/PageLoader";
+import { useSearchParams } from "next/navigation";
+import { SongsSearchEmptyState } from "./SongsSearchEmptyState";
 
 export const SongsList = () => {
-  const { data, isLoadingSongs, page, limit } = useSongsList();
+  const { data, page, search } = useSongsList();
   const searchParams = useSearchParams();
-  const router = useRouter();
-
-  if (isLoadingSongs) {
-    return <PageLoader />;
-  }
 
   if (!data?.data || data.data.length === 0) {
-    return <div>No songs found</div>;
+    return <SongsSearchEmptyState searchQuery={search} />;
   }
 
   const totalPages = data?.pagination?.pages || 1;
