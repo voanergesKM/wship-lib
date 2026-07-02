@@ -31,6 +31,7 @@ export async function getServerAuth() {
         username: dbUser.username,
         role: dbUser.role,
         photoUrl: dbUser.photoUrl,
+        email: dbUser.email || null,
       },
     };
   } catch (err) {

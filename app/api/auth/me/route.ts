@@ -44,6 +44,7 @@ export async function GET() {
         username: dbUser.username,
         role: dbUser.role,
         photoUrl: dbUser.photoUrl,
+        email: dbUser.email || null,
       },
     });
   } catch (err: any) {

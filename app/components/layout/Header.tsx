@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../providers/AuthContext";
 import ThemeToggle from "../ToggleTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ArrowLeft, LogOut, Plus } from "lucide-react";
+import { ArrowLeft, LogOut, Plus, UserRound, Users } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -86,6 +86,28 @@ export const Header = () => {
                     )}
                   </div>
                   <Separator className="my-1" />
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                  >
+                    <Link href="/profile">
+                      <UserRound className="mr-2 h-4 w-4" />
+                      Профіль
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                  >
+                    <Link href="/groups">
+                      <Users className="mr-2 h-4 w-4" />
+                      Мої групи
+                    </Link>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
