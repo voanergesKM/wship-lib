@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Providers from "@/components/providers";
 import { Header } from "./components/layout/Header";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -82,6 +83,8 @@ export default function RootLayout({
             {children}
           </main>
         </Providers>
+
+        <Analytics />
       </body>
     </html>
   );
