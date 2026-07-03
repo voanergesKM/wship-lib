@@ -13,6 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { groupsService } from "@/services/groups.service";
 import { useAuth } from "@/components/providers/AuthContext";
 
@@ -141,21 +148,24 @@ export function AddToPlaylistDialog({
                   <Loader2 className="h-4 w-4 animate-spin" /> Завантаження груп...
                 </div>
               ) : groups && groups.length > 0 ? (
-                <select
-                  id="group-select"
-                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                <Select
                   value={selectedGroupId}
-                  onChange={(e) => {
-                    setSelectedGroupId(e.target.value);
+                  onValueChange={(value) => {
+                    setSelectedGroupId(value);
                     setErrorMessage(null);
                   }}
                 >
-                  {groups.map((group) => (
-                    <option key={group._id} value={group._id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="group-select" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((group) => (
+                      <SelectItem key={group._id} value={group._id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               ) : (
                 <div className="text-sm text-amber-600 dark:text-amber-400 py-1">
                   У вас немає груп. Створіть групу в меню &quot;Мої групи&quot;, щоб керувати списками.

@@ -1,6 +1,13 @@
 import { useAppForm } from "@/components/shared/Form";
 import { getFormattedFormErrors } from "@/components/shared/Form/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { songSchema, songSchemaStep1 } from "@/lib/schema/song.schema";
 import { SongPayload, SongVisibility } from "@/services/songs.service";
 import { parseYouTubeLinks } from "@/utils/youtubeLinks";
@@ -140,17 +147,21 @@ export function SongEditForm({
             {(field) => (
               <label className="grid gap-2 text-sm font-medium">
                 Видимість
-                <select
-                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                <Select
                   value={field.state.value}
-                  onChange={(event) =>
-                    field.handleChange(event.target.value as SongVisibility)
+                  onValueChange={(value) =>
+                    field.handleChange(value as SongVisibility)
                   }
                 >
-                  <option value="public">Публічна</option>
-                  <option value="team">Для команди</option>
-                  <option value="private">Приватна</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Публічна</SelectItem>
+                    <SelectItem value="team">Для команди</SelectItem>
+                    <SelectItem value="private">Приватна</SelectItem>
+                  </SelectContent>
+                </Select>
               </label>
             )}
           </form.AppField>

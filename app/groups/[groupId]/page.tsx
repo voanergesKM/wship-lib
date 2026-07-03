@@ -22,6 +22,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -521,16 +528,21 @@ export default function GroupDetailsPage({
                     <Label htmlFor="invite-role" className="text-xs">
                       Роль у групі
                     </Label>
-                    <select
-                      id="invite-role"
-                      className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    <Select
                       value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value as any)}
+                      onValueChange={(value) =>
+                        setInviteRole(value as "admin" | "member")
+                      }
                       disabled={isInviting}
                     >
-                      <option value="member">Учасник</option>
-                      <option value="admin">Адміністратор</option>
-                    </select>
+                      <SelectTrigger id="invite-role" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Учасник</SelectItem>
+                        <SelectItem value="admin">Адміністратор</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Button
