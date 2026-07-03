@@ -6,112 +6,74 @@ export type NextRouteContext<TParams extends RouteParams> = {
   params: Promise<TParams>;
 };
 
-export type RouteContext<
-  TParams extends RouteParams,
-  TState extends object = object,
-> = {
-  request: NextRequest;
+export type BaseContext<TParams extends RouteParams = RouteParams> = {
   params: TParams;
-} & TState;
+};
 
 type MaybePromise<T> = T | Promise<T>;
-type GuardResult<TState extends object> = Response | TState | void;
+type MiddlewareResult<TAdds extends object> = Response | TAdds | void;
 
-export type RouteGuard<
-  TParams extends RouteParams,
-  TInputState extends object,
-  TOutputState extends object = object,
-> = (
-  context: RouteContext<TParams, TInputState>,
-) => MaybePromise<GuardResult<TOutputState>>;
+export type Middleware<TContext extends BaseContext, TAdds extends object> = (
+  request: NextRequest,
+  context: TContext,
+) => MaybePromise<MiddlewareResult<TAdds>>;
 
-export type RouteHandler<
-  TParams extends RouteParams,
-  TState extends object = object,
-> = (context: RouteContext<TParams, TState>) => MaybePromise<Response>;
+export type Handler<TContext extends BaseContext> = (
+  request: NextRequest,
+  context: TContext,
+) => MaybePromise<Response>;
 
-export type NextRouteHandler<TParams extends RouteParams> = (
+export type RouteHandler<TParams extends RouteParams> = (
   request: NextRequest,
   context: NextRouteContext<TParams>,
 ) => Promise<Response>;
 
-export function composeRoute<TParams extends RouteParams>(
-  handler: RouteHandler<TParams>,
-): NextRouteHandler<TParams>;
+export class Chain<TContext extends BaseContext> {
+  private constructor(
+    private readonly middlewares: Middleware<BaseContext, object>[],
+  ) {}
 
-export function composeRoute<
-  TParams extends RouteParams,
-  TStateA extends object,
->(
-  guardA: RouteGuard<TParams, object, TStateA>,
-  handler: RouteHandler<TParams, TStateA>,
-): NextRouteHandler<TParams>;
+  static create<TParams extends RouteParams = RouteParams>() {
+    return new Chain<BaseContext<TParams>>([]);
+  }
 
-export function composeRoute<
-  TParams extends RouteParams,
-  TStateA extends object,
-  TStateB extends object,
->(
-  guardA: RouteGuard<TParams, object, TStateA>,
-  guardB: RouteGuard<TParams, TStateA, TStateB>,
-  handler: RouteHandler<TParams, TStateA & TStateB>,
-): NextRouteHandler<TParams>;
+  use<TAdds extends object>(
+    middleware: Middleware<TContext, TAdds>,
+  ): Chain<TContext & TAdds> {
+    return new Chain<TContext & TAdds>([
+      ...this.middlewares,
+      middleware as unknown as Middleware<BaseContext, object>,
+    ]);
+  }
 
-export function composeRoute<
-  TParams extends RouteParams,
-  TStateA extends object,
-  TStateB extends object,
-  TStateC extends object,
->(
-  guardA: RouteGuard<TParams, object, TStateA>,
-  guardB: RouteGuard<TParams, TStateA, TStateB>,
-  guardC: RouteGuard<TParams, TStateA & TStateB, TStateC>,
-  handler: RouteHandler<TParams, TStateA & TStateB & TStateC>,
-): NextRouteHandler<TParams>;
+  handler(handler: Handler<TContext>): RouteHandler<TContext["params"]> {
+    const middlewares = this.middlewares;
 
-export function composeRoute<
-  TParams extends RouteParams,
-  TStateA extends object,
-  TStateB extends object,
-  TStateC extends object,
-  TStateD extends object,
->(
-  guardA: RouteGuard<TParams, object, TStateA>,
-  guardB: RouteGuard<TParams, TStateA, TStateB>,
-  guardC: RouteGuard<TParams, TStateA & TStateB, TStateC>,
-  guardD: RouteGuard<TParams, TStateA & TStateB & TStateC, TStateD>,
-  handler: RouteHandler<TParams, TStateA & TStateB & TStateC & TStateD>,
-): NextRouteHandler<TParams>;
+    return async (request, routeContext) => {
+      let context: BaseContext = {
+        params: await routeContext.params,
+      };
 
-export function composeRoute<TParams extends RouteParams>(
-  ...parts: [
-    ...RouteGuard<TParams, object, object>[],
-    RouteHandler<TParams, object>,
-  ]
-): NextRouteHandler<TParams> {
-  return async (request, { params }) => {
-    const resolvedParams = await params;
-    const context: RouteContext<TParams> = {
-      request,
-      params: resolvedParams,
+      for (const middleware of middlewares) {
+        const result = await middleware(request, context);
+
+        if (result instanceof Response) {
+          return result;
+        }
+
+        if (result) {
+          context = {
+            ...context,
+            ...result,
+          };
+        }
+      }
+
+      return handler(request, context as TContext);
     };
-
-    const handler = parts[parts.length - 1] as RouteHandler<TParams>;
-    const guards = parts.slice(0, -1) as RouteGuard<TParams, object>[];
-
-    for (const guard of guards) {
-      const result = await guard(context);
-
-      if (result instanceof Response) {
-        return result;
-      }
-
-      if (result) {
-        Object.assign(context, result);
-      }
-    }
-
-    return handler(context);
-  };
+  }
 }
-export { composeRoute as composeRouter };
+
+export function chain<TParams extends RouteParams = RouteParams>() {
+  return Chain.create<TParams>();
+}

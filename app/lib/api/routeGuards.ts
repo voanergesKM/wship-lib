@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
 import { Group, type GroupDocument } from "@/models/Group";
-import type { RouteContext, RouteGuard, RouteParams } from "./composeRoute";
+import type { BaseContext, Middleware, RouteParams } from "./composeRoute";
 
 type ServerAuth = Awaited<ReturnType<typeof getServerAuth>>;
 
@@ -13,7 +13,7 @@ export type AuthenticatedSession = ServerAuth & {
   user: AuthenticatedUser;
 };
 
-export type AuthRouteState = {
+export type AuthContext = {
   session: AuthenticatedSession;
 };
 
@@ -21,7 +21,7 @@ export type GroupRouteParams = RouteParams & {
   groupId: string;
 };
 
-export type GroupAccessRouteState = {
+export type GroupAccessContext = {
   group: GroupDocument;
 };
 
@@ -36,11 +36,7 @@ type GroupMember = {
   userId?: MemberUserRef | null;
 };
 
-export async function requireAuth<TParams extends RouteParams>(
-  context: RouteContext<TParams>,
-): Promise<Response | AuthRouteState>;
-
-export async function requireAuth(): Promise<Response | AuthRouteState> {
+export const requireAuth: Middleware<BaseContext, AuthContext> = async () => {
   const session = await getServerAuth();
 
   if (!session || !session.authenticated || !session.user) {
@@ -50,13 +46,12 @@ export async function requireAuth(): Promise<Response | AuthRouteState> {
   return {
     session: session as AuthenticatedSession,
   };
-}
+};
 
-export const requireGroupAccess: RouteGuard<
-  GroupRouteParams,
-  AuthRouteState,
-  GroupAccessRouteState
-> = async ({ params, session }) => {
+export const requireGroupAccess: Middleware<
+  BaseContext<GroupRouteParams> & AuthContext,
+  GroupAccessContext
+> = async (_request, { params, session }) => {
   await connectDB();
 
   const group = await Group.findById(params.groupId);
