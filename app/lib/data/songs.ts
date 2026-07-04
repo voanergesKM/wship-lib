@@ -1,4 +1,5 @@
 import { Song, SongDocument } from "@/models/Song";
+import { User } from "@/models/User";
 import { connectDB } from "../db";
 
 export async function getSongBySlug(
