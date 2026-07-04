@@ -9,6 +9,7 @@ import {
 } from "mongoose";
 import { buildSearchText } from "@/utils/buildSearchText";
 import { YouTubeLink } from "@/utils/youtubeLinks";
+import { User } from "./User";
 
 type SongUpdate = {
   title?: string;

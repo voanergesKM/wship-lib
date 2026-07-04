@@ -5,6 +5,7 @@ import {
   InferSchemaType,
   HydratedDocument,
 } from "mongoose";
+import { User } from "./User";
 
 const GroupMemberSchema = new Schema(
   {

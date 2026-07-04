@@ -1,4 +1,5 @@
 import { Schema, model, models, InferSchemaType, HydratedDocument } from "mongoose";
+import { User } from "./User";
 
 const AuthSessionSchema = new Schema(
   {

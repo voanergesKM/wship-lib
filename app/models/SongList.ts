@@ -5,6 +5,8 @@ import {
   InferSchemaType,
   HydratedDocument,
 } from "mongoose";
+import { User } from "./User";
+import { Song } from "./Song";
 
 const SongListSchema = new Schema(
   {
