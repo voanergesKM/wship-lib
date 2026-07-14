@@ -2,13 +2,12 @@ import { getQueryClient } from "@/lib/queryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { SongPage } from "./SongPage";
 import { getSongBySlug } from "@/lib/data/songs";
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
   const { slug } = await params;
   const song = await getSongBySlug(slug);
 
@@ -22,6 +21,8 @@ export async function generateMetadata({
   const tags = song.tags?.join(", ") || "";
   const description = `${song.title}${authors ? ` • ${authors}` : ""}${tags ? ` • ${tags}` : ""}`;
 
+  const previousImages = (await parent).openGraph?.images || [];
+
   return {
     title: song.title,
     description,
@@ -29,6 +30,13 @@ export async function generateMetadata({
       title: song.title,
       description,
       type: "website",
+      images: previousImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: song.title,
+      description,
+      images: previousImages,
     },
   };
 }
