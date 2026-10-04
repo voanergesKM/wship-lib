@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { parseSong } from "@/utils/parseSong";
+import { lineToWords } from "@/utils/chordWords";
 
 type SongSheetProps = {
   content: string;
@@ -20,7 +21,7 @@ export function SongSheet({
 
   return (
     <div className={cn("overflow-auto", className)} style={{ fontSize }}>
-      <div>
+      <div className="space-y-1">
         {blocks.map((block, index) => {
           if (block.type === "empty") {
             return <div key={index} className="h-6" />;
@@ -37,7 +38,7 @@ export function SongSheet({
                   textAlign: block.align,
                 }}
                 className={cn(
-                  "whitespace-pre",
+                  "whitespace-pre pt-2 pb-1",
                   block.level === 1
                     ? "text-lg font-bold"
                     : block.level === 2
@@ -50,34 +51,64 @@ export function SongSheet({
             );
           }
 
+          const hasChords =
+            showChords && block.parts.some((p) => Boolean(p.chord));
+
+          if (!hasChords) {
+            return (
+              <div
+                key={index}
+                style={{
+                  textAlign: block.align,
+                }}
+                className="font-mono whitespace-pre-wrap leading-normal"
+              >
+                {block.parts.map((part) => part.lyric).join("")}
+              </div>
+            );
+          }
+
+          const words = lineToWords(block.parts);
+
           return (
             <div
               key={index}
               style={{
                 textAlign: block.align,
               }}
-              className="font-mono relative leading-5"
+              className="font-mono leading-normal"
             >
-              {showChords && (
-                <div className="flex whitespace-pre">
-                  {block.parts.map((part, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        color: chordColor,
-                      }}
-                      className="font-bold"
-                    >
-                      {part.chord || ""}
-                      {" ".repeat(part.lyric.length)}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="whitespace-pre-wrap">
-                {block.parts.map((part) => part.lyric).join("")}
-              </div>
+              {words.map((word, wIdx) => (
+                <span key={wIdx} className="inline-block align-top">
+                  <span className="inline-flex">
+                    {word.syllables.map((syl, sIdx) => (
+                      <span key={sIdx} className="inline-flex flex-col">
+                        <span
+                          style={{ color: chordColor }}
+                          className="font-bold whitespace-pre text-[0.85em] leading-tight min-h-[1.25em]"
+                        >
+                          {syl.chord || (
+                            <span className="invisible select-none">&#8203;</span>
+                          )}
+                        </span>
+                        <span className="whitespace-pre">
+                          {syl.text ||
+                            (syl.chord ? (
+                              <span className="invisible select-none">
+                                {" ".repeat(syl.chord.length)}
+                              </span>
+                            ) : (
+                              ""
+                            ))}
+                        </span>
+                      </span>
+                    ))}
+                  </span>
+                  {word.trailingSpaces && (
+                    <span className="whitespace-pre">{word.trailingSpaces}</span>
+                  )}
+                </span>
+              ))}
             </div>
           );
         })}
