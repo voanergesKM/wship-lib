@@ -1,12 +1,11 @@
 import { ReactNode } from "react";
-import { EyeIcon, Film, Music2 } from "lucide-react";
+import { FileText, Film, Info } from "lucide-react";
 
 import { SongVisibility } from "@/services/songs.service";
 import { YouTubeLink } from "@/utils/youtubeLinks";
 import { SongMedia } from "./SongMedia";
-import { SongPreview } from "./SongPreview";
+import { SongText } from "./SongText";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 
 const visibilityLabels: Record<SongVisibility, string> = {
   public: "Публічна",
@@ -34,25 +33,31 @@ export function SongView({
   visibility: SongVisibility;
 }) {
   return (
-    <Tabs defaultValue="song" className="w-full gap-5">
+    <Tabs defaultValue="text" className="w-full gap-5">
       <TabsList>
-        <TabsTrigger value="song">
-          <Music2 />
-          Пісня
+        <TabsTrigger value="text">
+          <FileText />
+          Текст
         </TabsTrigger>
         <TabsTrigger value="media">
           <Film />
           Медіа
         </TabsTrigger>
-        <TabsTrigger value="preview" asChild>
-          <SongPreview
-            content={document}
-            dialogTrigger={<Button variant="outline">Текст</Button>}
-          />
+        <TabsTrigger value="metadata">
+          <Info />
+          Метадані
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="song">
+      <TabsContent value="text">
+        <SongText content={document} />
+      </TabsContent>
+
+      <TabsContent value="media">
+        <SongMedia youtube={youtube} />
+      </TabsContent>
+
+      <TabsContent value="metadata">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),280px]">
           <aside className="space-y-4 rounded-lg border bg-card p-4">
             <h2 className="text-lg font-semibold">Метадані</h2>
@@ -73,10 +78,6 @@ export function SongView({
             </dl>
           </aside>
         </div>
-      </TabsContent>
-
-      <TabsContent value="media">
-        <SongMedia youtube={youtube} />
       </TabsContent>
     </Tabs>
   );

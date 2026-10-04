@@ -7,8 +7,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { parseSong } from "@/utils/parseSong";
 import { transposeContent } from "@/utils/chordTransposition";
 import {
   EyeIcon,
@@ -25,6 +23,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ReactNode, useState, useMemo } from "react";
+import { SongSheet } from "./SongSheet";
 
 type Props = {
   content: string;
@@ -48,8 +47,6 @@ export function SongPreview({
       ? content
       : transposeContent(content, effectiveTranspose);
   }, [content, transposeSemitones, capoFret]);
-
-  const blocks = parseSong(transposedContent);
 
   const handleToggleChords = () => {
     setShowChords((prev) => !prev);
@@ -99,7 +96,7 @@ export function SongPreview({
 
       <DialogContent className="max-w-4xl w-full md:w-fit">
         <DialogHeader>
-          <Controls
+          <SongControls
             onToggleChords={handleToggleChords}
             onFontSizeUp={handleFontSizeUp}
             onFontSizeDown={handleFontSizeDown}
@@ -116,91 +113,19 @@ export function SongPreview({
           <DialogDescription hidden>Перегляд пісні</DialogDescription>
         </DialogHeader>
 
-        <div
-          className="max-h-[85dvh] max-w-2xl overflow-auto mx-auto"
-          style={{ fontSize }}
-        >
-          <div>
-            {blocks.map((block, index) => {
-              if (block.type === "empty") {
-                return <div key={index} className="h-6" />;
-              }
-
-              if (block.type === "heading") {
-                const Tag =
-                  block.level === 1 ? "h1" : block.level === 2 ? "h2" : "h3";
-
-                return (
-                  <Tag
-                    key={index}
-                    style={{
-                      textAlign: block.align,
-                    }}
-                    className={cn(
-                      "whitespace-pre",
-                      block.level === 1
-                        ? "text-lg font-bold"
-                        : block.level === 2
-                          ? "font-bold"
-                          : "text-sm italic",
-                    )}
-                  >
-                    {block.text}
-                  </Tag>
-                );
-              }
-
-              return (
-                <div
-                  key={index}
-                  style={{
-                    textAlign: block.align,
-                  }}
-                  className="font-mono relative leading-5"
-                >
-                  {showChords && (
-                    <div className="flex whitespace-pre">
-                      {block.parts.map((part, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            color: chordColor,
-                          }}
-                          className="font-bold"
-                        >
-                          {part.chord || ""}
-                          {" ".repeat(part.lyric.length)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="whitespace-pre-wrap ">
-                    {block.parts.map((part) => part.lyric).join("")}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <SongSheet
+          content={transposedContent}
+          fontSize={fontSize}
+          showChords={showChords}
+          chordColor={chordColor}
+          className="max-h-[85dvh] max-w-2xl mx-auto"
+        />
       </DialogContent>
     </Dialog>
   );
 }
 
-function Controls({
-  onToggleChords,
-  onFontSizeUp,
-  onFontSizeDown,
-  onTransposeUp,
-  onTransposeDown,
-  onResetTranspose,
-  transposeSemitones,
-  onCapoUp,
-  onCapoDown,
-  onResetCapo,
-  capoFret,
-}: {
+export type SongControlsProps = {
   onToggleChords: () => void;
   onFontSizeUp: () => void;
   onFontSizeDown: () => void;
@@ -212,23 +137,58 @@ function Controls({
   onCapoDown: () => void;
   onResetCapo: () => void;
   capoFret: number;
-}) {
+  extraActions?: ReactNode;
+};
+
+export function SongControls({
+  onToggleChords,
+  onFontSizeUp,
+  onFontSizeDown,
+  onTransposeUp,
+  onTransposeDown,
+  onResetTranspose,
+  transposeSemitones,
+  onCapoUp,
+  onCapoDown,
+  onResetCapo,
+  capoFret,
+  extraActions,
+}: SongControlsProps) {
   return (
-    <div className="flex items-center gap-4">
-      <Button size={"icon-xs"} onClick={onToggleChords}>
+    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+      <Button
+        size="icon-xs"
+        variant="outline"
+        onClick={onToggleChords}
+        title="Показати/приховати акорди"
+      >
         <ListFilter />
       </Button>
 
-      <Button size={"icon-xs"} onClick={onFontSizeUp}>
+      <Button
+        size="icon-xs"
+        variant="outline"
+        onClick={onFontSizeUp}
+        title="Збільшити шрифт"
+      >
         <ImagePlus />
       </Button>
-      <Button size={"icon-xs"} onClick={onFontSizeDown}>
+      <Button
+        size="icon-xs"
+        variant="outline"
+        onClick={onFontSizeDown}
+        title="Зменшити шрифт"
+      >
         <ImageMinus />
       </Button>
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button size="icon-xs" variant="outline" className="ml-2">
+          <Button
+            size="icon-xs"
+            variant="outline"
+            title="Налаштування тональності та каподастра"
+          >
             <Settings2 />
           </Button>
         </PopoverTrigger>
@@ -247,7 +207,7 @@ function Controls({
                 <div className="flex items-center gap-2">
                   {transposeSemitones !== 0 && (
                     <Button
-                      size={"icon-xs"}
+                      size="icon-xs"
                       variant="ghost"
                       onClick={onResetTranspose}
                     >
@@ -255,7 +215,7 @@ function Controls({
                     </Button>
                   )}
                   <Button
-                    size={"icon-xs"}
+                    size="icon-xs"
                     variant="outline"
                     onClick={onTransposeDown}
                   >
@@ -267,7 +227,7 @@ function Controls({
                       : transposeSemitones}
                   </span>
                   <Button
-                    size={"icon-xs"}
+                    size="icon-xs"
                     variant="outline"
                     onClick={onTransposeUp}
                   >
@@ -281,7 +241,7 @@ function Controls({
                 <div className="flex items-center gap-2">
                   {capoFret !== 0 && (
                     <Button
-                      size={"icon-xs"}
+                      size="icon-xs"
                       variant="ghost"
                       onClick={onResetCapo}
                     >
@@ -289,7 +249,7 @@ function Controls({
                     </Button>
                   )}
                   <Button
-                    size={"icon-xs"}
+                    size="icon-xs"
                     variant="outline"
                     onClick={onCapoDown}
                     disabled={capoFret <= 0}
@@ -300,7 +260,7 @@ function Controls({
                     {capoFret}
                   </span>
                   <Button
-                    size={"icon-xs"}
+                    size="icon-xs"
                     variant="outline"
                     onClick={onCapoUp}
                     disabled={capoFret >= 12}
@@ -313,6 +273,8 @@ function Controls({
           </div>
         </PopoverContent>
       </Popover>
+
+      {extraActions}
     </div>
   );
 }
