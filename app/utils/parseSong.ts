@@ -33,6 +33,14 @@ function parseLine(line: string): Part[] {
   return parts;
 }
 
+/**
+ * ⚠️ УВАГА / IMPORTANT:
+ * Цей парсер визначає синтаксис розмітки пісень (акорди [Chord], теги секцій #, ##, ### та теги вирівнювання @center, @left, @right).
+ *
+ * При будь-якій зміні, додаванні нових тегів чи модифікації правил парсингу:
+ * ОБОВ'ЯЗКОВО оновіть інструкцію та приклади для користувачів у компоненті:
+ * @see "@/songs/_components/SongFormatGuideDialog"
+ */
 export function parseSong(content: string): Block[] {
   const lines = content.split("\n");
 

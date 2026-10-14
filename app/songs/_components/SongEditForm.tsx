@@ -14,6 +14,7 @@ import { parseYouTubeLinks } from "@/utils/youtubeLinks";
 import { X } from "lucide-react";
 import z from "zod";
 import { SongPreview } from "./SongPreview";
+import { SongFormatGuideDialog } from "./SongFormatGuideDialog";
 
 type SongEditValues = {
   title: string;
@@ -205,17 +206,16 @@ export function SongEditForm({
             )}
           </form.AppField>
 
-          <form.Subscribe selector={(state) => state.values.document}>
-            {(document) => {
-              return (
-                document?.length > 0 && (
-                  <div className="absolute top-10 right-3">
-                    <SongPreview content={document} />
-                  </div>
-                )
-              );
-            }}
-          </form.Subscribe>
+          <div className="absolute top-10 right-3 flex items-center gap-1.5">
+            <SongFormatGuideDialog />
+            <form.Subscribe selector={(state) => state.values.document}>
+              {(document) =>
+                document?.length > 0 ? (
+                  <SongPreview content={document} />
+                ) : null
+              }
+            </form.Subscribe>
+          </div>
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
