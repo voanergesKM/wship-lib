@@ -1,4 +1,10 @@
 import { baseFetcher } from "@/utils/baseFetcher";
+import { SongArrangement } from "./songs.service";
+
+export interface SongListArrangementItem {
+  song: string | { _id: string; title: string; slug: string };
+  arrangement: SongArrangement;
+}
 
 export interface GroupMember {
   userId: {
@@ -68,6 +74,7 @@ export interface SongListDetails {
   name: string;
   groupId: string;
   songs: PopulatedSongListItem[];
+  songArrangements?: SongListArrangementItem[];
   createdBy: {
     _id: string;
     firstName: string;
@@ -152,10 +159,15 @@ export const groupsService = {
     return baseFetcher<SongListDetails[]>(`/groups/${groupId}/lists`, { method: "GET" });
   },
 
-  createSongList: (groupId: string, name: string, songId?: string) => {
+  createSongList: (
+    groupId: string,
+    name: string,
+    songId?: string,
+    arrangementId?: string,
+  ) => {
     return baseFetcher<SongListDetails>(`/groups/${groupId}/lists`, {
       method: "POST",
-      body: JSON.stringify({ name, songId }),
+      body: JSON.stringify({ name, songId, arrangementId }),
     });
   },
 
@@ -181,13 +193,33 @@ export const groupsService = {
     );
   },
 
-  addSongToList: (groupId: string, listId: string, songId: string) => {
+  addSongToList: (
+    groupId: string,
+    listId: string,
+    songId: string,
+    arrangementId?: string,
+  ) => {
     return baseFetcher<{ success: boolean; message: string }>(
       `/groups/${groupId}/lists/${listId}/songs`,
       {
         method: "POST",
-        body: JSON.stringify({ songId }),
+        body: JSON.stringify({ songId, arrangementId }),
       }
+    );
+  },
+
+  setSongArrangement: (
+    groupId: string,
+    listId: string,
+    songId: string,
+    arrangementId: string | null,
+  ) => {
+    return baseFetcher<{ success: boolean; list: SongListDetails }>(
+      `/groups/${groupId}/lists/${listId}/songs/${songId}/arrangement`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ arrangementId }),
+      },
     );
   },
 

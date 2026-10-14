@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ListPlus, Loader2, Plus } from "lucide-react";
+import { ListPlus, Loader2, Plus, ListMusic } from "lucide-react";
 
 import {
   Dialog,
@@ -22,10 +22,12 @@ import {
 } from "@/components/ui/select";
 import { groupsService } from "@/services/groups.service";
 import { useAuth } from "@/components/providers/AuthContext";
+import { useSongArrangements } from "@/hooks/useSongArrangements";
 
 export interface AddToPlaylistDialogProps {
   songId: string;
   songTitle: string;
+  songSlug?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -33,14 +35,16 @@ export interface AddToPlaylistDialogProps {
 export function AddToPlaylistDialog({
   songId,
   songTitle,
+  songSlug,
   open,
   onOpenChange,
 }: AddToPlaylistDialogProps) {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  // selectedGroupId holds an explicit user choice; empty string = "not yet chosen"
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [selectedArrangementId, setSelectedArrangementId] =
+    useState<string>("none");
   const [newListName, setNewListName] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -52,10 +56,9 @@ export function AddToPlaylistDialog({
     enabled: open && isAuthenticated,
   });
 
-  // Derive the effective group ID: use the explicit user selection if set,
-  // otherwise fall back to the first available group.
-  // This replaces the previous useEffect + setState pattern that caused
-  // an extra cascading render every time groups finished loading.
+  // Fetch arrangements for this song if slug is provided
+  const { arrangements } = useSongArrangements(songSlug || "", open && Boolean(songSlug));
+
   const effectiveGroupId = selectedGroupId || groups?.[0]?._id || "";
 
   // Fetch lists for the effective group
@@ -68,9 +71,19 @@ export function AddToPlaylistDialog({
   // Mutation to add song to existing list
   const { mutateAsync: addSong, isPending: isAdding } = useMutation({
     mutationFn: ({ listId }: { listId: string }) =>
-      groupsService.addSongToList(effectiveGroupId, listId, songId),
+      groupsService.addSongToList(
+        effectiveGroupId,
+        listId,
+        songId,
+        selectedArrangementId === "none" ? undefined : selectedArrangementId,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groupLists", effectiveGroupId] });
+      queryClient.invalidateQueries({
+        queryKey: ["groupLists", effectiveGroupId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["songList", effectiveGroupId],
+      });
       setSuccessMessage("Пісню успішно додано!");
       setErrorMessage(null);
       setTimeout(() => {
@@ -87,9 +100,16 @@ export function AddToPlaylistDialog({
   // Mutation to create new list and add song
   const { mutateAsync: createAndAdd, isPending: isCreating } = useMutation({
     mutationFn: (name: string) =>
-      groupsService.createSongList(effectiveGroupId, name, songId),
+      groupsService.createSongList(
+        effectiveGroupId,
+        name,
+        songId,
+        selectedArrangementId === "none" ? undefined : selectedArrangementId,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groupLists", effectiveGroupId] });
+      queryClient.invalidateQueries({
+        queryKey: ["groupLists", effectiveGroupId],
+      });
       setSuccessMessage("Список створено та пісню додано!");
       setNewListName("");
       setErrorMessage(null);
@@ -118,7 +138,8 @@ export function AddToPlaylistDialog({
             Додати до списку
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Пісня: <span className="font-semibold text-foreground">{songTitle}</span>
+            Пісня:{" "}
+            <span className="font-semibold text-foreground">{songTitle}</span>
           </p>
         </DialogHeader>
 
@@ -127,7 +148,7 @@ export function AddToPlaylistDialog({
             Будь ласка, увійдіть в акаунт, щоб користуватися списками пісень.
           </div>
         ) : (
-          <div className="space-y-6 py-2">
+          <div className="space-y-5 py-2">
             {successMessage && (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3 rounded-lg text-sm text-center font-medium animate-in fade-in duration-200">
                 {successMessage}
@@ -145,7 +166,8 @@ export function AddToPlaylistDialog({
               <Label htmlFor="group-select">Оберіть групу</Label>
               {isLoadingGroups ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Завантаження груп...
+                  <Loader2 className="h-4 w-4 animate-spin" /> Завантаження
+                  груп...
                 </div>
               ) : groups && groups.length > 0 ? (
                 <Select
@@ -168,10 +190,51 @@ export function AddToPlaylistDialog({
                 </Select>
               ) : (
                 <div className="text-sm text-amber-600 dark:text-amber-400 py-1">
-                  У вас немає груп. Створіть групу в меню &quot;Мої групи&quot;, щоб керувати списками.
+                  У вас немає груп. Створіть групу в меню &quot;Мої групи&quot;,
+                  щоб керувати списками.
                 </div>
               )}
             </div>
+
+            {/* Select Arrangement (if song has any) */}
+            {arrangements && arrangements.length > 0 && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="arr-select"
+                  className="flex items-center gap-1.5"
+                >
+                  <ListMusic className="size-3.5 text-primary" />
+                  Структура пісні (необов&apos;язково)
+                </Label>
+                <Select
+                  value={selectedArrangementId}
+                  onValueChange={setSelectedArrangementId}
+                >
+                  <SelectTrigger id="arr-select" className="w-full text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      Без структури (повний текст)
+                    </SelectItem>
+                    {arrangements.map((arr) => {
+                      const summary = arr.items
+                        .map((i) =>
+                          i.repeat > 1
+                            ? `${i.section} - ${i.repeat}р`
+                            : i.section,
+                        )
+                        .join(", ");
+                      return (
+                        <SelectItem key={arr._id} value={arr._id}>
+                          {arr.name} ({summary})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {effectiveGroupId && (
               <>
@@ -180,14 +243,15 @@ export function AddToPlaylistDialog({
                   <Label>Існуючі списки</Label>
                   {isLoadingLists ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Завантаження списків...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Завантаження
+                      списків...
                     </div>
                   ) : lists && lists.length > 0 ? (
                     <div className="max-h-48 overflow-y-auto border rounded-md divide-y bg-muted/20">
                       {lists.map((list) => {
                         const hasSong = list.songs?.some(
                           (s: { _id?: string } | string) =>
-                            (typeof s === "object" ? s._id : s) === songId
+                            (typeof s === "object" ? s._id : s) === songId,
                         );
 
                         return (
@@ -226,8 +290,13 @@ export function AddToPlaylistDialog({
                 </div>
 
                 {/* Create New List */}
-                <form onSubmit={handleCreateList} className="space-y-2 border-t pt-4">
-                  <Label htmlFor="new-list-name">Створити новий список у групі</Label>
+                <form
+                  onSubmit={handleCreateList}
+                  className="space-y-2 border-t pt-4"
+                >
+                  <Label htmlFor="new-list-name">
+                    Створити новий список у групі
+                  </Label>
                   <div className="flex gap-2">
                     <Input
                       id="new-list-name"
@@ -237,7 +306,10 @@ export function AddToPlaylistDialog({
                       disabled={isCreating}
                       required
                     />
-                    <Button type="submit" disabled={isCreating || !newListName.trim()}>
+                    <Button
+                      type="submit"
+                      disabled={isCreating || !newListName.trim()}
+                    >
                       {isCreating ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (

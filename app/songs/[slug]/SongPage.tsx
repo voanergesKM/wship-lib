@@ -14,6 +14,8 @@ import {
   History,
   Clock,
   Sparkles,
+  Play,
+  Pause,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -37,8 +39,11 @@ import { useAuth } from "@/components/providers/AuthContext";
 import { AddToPlaylistDialog } from "@/components/shared/AddToPlaylistDialog";
 import { groupsService } from "@/services/groups.service";
 import { useSongProposals } from "@/hooks/useSongProposals";
+import { useSongArrangements } from "@/hooks/useSongArrangements";
 import { SongProposalDialog } from "../_components/SongProposalDialog";
 import { SongProposalReviewDialog } from "../_components/SongProposalReviewDialog";
+import { SongArrangementDialog } from "../_components/SongArrangementDialog";
+import { SongStructurePlayer } from "../_components/SongStructurePlayer";
 import {
   Dialog,
   DialogContent,
@@ -58,8 +63,18 @@ export function SongPage({ slug }: { slug: string }) {
   const { user, isAuthenticated, refreshUser } = useAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
-  const [isReviewOpenOverride, setIsReviewOpenOverride] = useState<boolean | null>(null);
+  const [isReviewOpenOverride, setIsReviewOpenOverride] = useState<
+    boolean | null
+  >(null);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [isArrangementDialogOpen, setIsArrangementDialogOpen] = useState(false);
+
+  // Playback structure states
+  const [selectedArrangementId, setSelectedArrangementId] = useState<
+    string | null
+  >(null);
+  const [isPlayingStructure, setIsPlayingStructure] = useState<boolean>(false);
+  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
 
   const searchParams = useSearchParams();
   const listId = searchParams?.get("list") || null;
@@ -75,6 +90,12 @@ export function SongPage({ slug }: { slug: string }) {
     reviewProposal,
     isReviewing,
   } = useSongProposals(slug, Boolean(slug));
+
+  const {
+    arrangements,
+    createArrangement,
+    isCreating: isCreatingArrangement,
+  } = useSongArrangements(slug, Boolean(slug));
 
   const { data: playlist } = useQuery({
     queryKey: ["songList", groupId, listId],
@@ -141,11 +162,61 @@ export function SongPage({ slug }: { slug: string }) {
     [proposals],
   );
 
+  const hasSections = useMemo(
+    () => Boolean(data?.document && /<section\s+(?:id|name)=/i.test(data.document)),
+    [data],
+  );
+
+  // Arrangement assigned to this song in current playlist (if opened from playlist)
+  const playlistArrangement = useMemo(() => {
+    if (!playlist?.songArrangements || !data?._id) return null;
+    const item = playlist.songArrangements.find(
+      (sa) =>
+        (typeof sa.song === "object" ? sa.song._id : sa.song) ===
+        data._id.toString(),
+    );
+    return item?.arrangement || null;
+  }, [playlist, data]);
+
+  // Current active arrangement
+  const currentArrangement = useMemo(() => {
+    if (selectedArrangementId) {
+      return (
+        arrangements.find((a) => a._id === selectedArrangementId) || null
+      );
+    }
+    if (playlistArrangement) return playlistArrangement;
+    return arrangements[0] || null;
+  }, [selectedArrangementId, arrangements, playlistArrangement]);
+
+  // Expand steps for current arrangement
+  const playbackSteps = useMemo(() => {
+    if (!currentArrangement) return [];
+    const list: Array<{ sectionId: string; label: string }> = [];
+    for (const item of currentArrangement.items) {
+      const repeat = item.repeat || 1;
+      for (let r = 1; r <= repeat; r++) {
+        list.push({
+          sectionId: item.section,
+          label:
+            repeat > 1 ? `${item.section} (${r}/${repeat})` : item.section,
+        });
+      }
+    }
+    return list;
+  }, [currentArrangement]);
+
+  const activeSectionId =
+    isPlayingStructure && playbackSteps[activeStepIndex]
+      ? playbackSteps[activeStepIndex].sectionId
+      : null;
+
   const isReviewDialogOpen =
     isReviewOpenOverride !== null
       ? isReviewOpenOverride
       : Boolean(proposalParam && (canEdit || isOwnerOrAdmin));
-  const setIsReviewDialogOpen = (open: boolean) => setIsReviewOpenOverride(open);
+  const setIsReviewDialogOpen = (open: boolean) =>
+    setIsReviewOpenOverride(open);
 
   const { mutateAsync: updateSong } = useMutation({
     mutationFn: (payload: SongPayload) => songsService.update(slug, payload),
@@ -300,6 +371,46 @@ export function SongPage({ slug }: { slug: string }) {
             </Button>
           )}
 
+          {/* Structure buttons (Arrangements) */}
+          {mode === "view" && hasSections && (
+            <>
+              {currentArrangement ? (
+                <Button
+                  type="button"
+                  variant={isPlayingStructure ? "default" : "outline"}
+                  onClick={() => {
+                    setIsPlayingStructure((prev) => !prev);
+                    setActiveStepIndex(0);
+                  }}
+                  title={
+                    isPlayingStructure
+                      ? "Зупинити програвання структури"
+                      : "Запустити програвання по структурі зі скролом"
+                  }
+                  className="gap-1.5"
+                >
+                  {isPlayingStructure ? (
+                    <Pause className="size-4" />
+                  ) : (
+                    <Play className="size-4 fill-current" />
+                  )}
+                  <span>Структура: {currentArrangement.name}</span>
+                </Button>
+              ) : null}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsArrangementDialogOpen(true)}
+                title="Створити нову структуру пісні"
+              >
+                <ListMusic className="size-4 mr-1 text-primary" />
+                {arrangements.length > 0 ? "+ Структура" : "Створити структуру"}
+              </Button>
+            </>
+          )}
+
           {/* Author/Admin controls */}
           {mode === "view" && canEdit && (
             <>
@@ -403,6 +514,16 @@ export function SongPage({ slug }: { slug: string }) {
         </div>
       )}
 
+      {/* Interactive Structure Playback bar */}
+      {isPlayingStructure && currentArrangement && (
+        <SongStructurePlayer
+          arrangement={currentArrangement}
+          activeStepIndex={activeStepIndex}
+          onStepChange={setActiveStepIndex}
+          onClose={() => setIsPlayingStructure(false)}
+        />
+      )}
+
       {mode === "view" ? (
         <SongView
           title={data.title}
@@ -414,6 +535,7 @@ export function SongPage({ slug }: { slug: string }) {
           youtube={youtube}
           visibility={visibility}
           creatorDisplayName={creatorDisplayName}
+          activeSectionId={activeSectionId}
         />
       ) : (
         <SongEditForm
@@ -441,8 +563,24 @@ export function SongPage({ slug }: { slug: string }) {
         <AddToPlaylistDialog
           songId={data._id.toString()}
           songTitle={data.title}
+          songSlug={slug}
           open={isAddOpen}
           onOpenChange={setIsAddOpen}
+        />
+      )}
+
+      {isArrangementDialogOpen && (
+        <SongArrangementDialog
+          open={isArrangementDialogOpen}
+          onOpenChange={setIsArrangementDialogOpen}
+          document={data.document}
+          onSave={async (payload) => {
+            const created = await createArrangement(payload);
+            setSelectedArrangementId(created._id);
+            setIsPlayingStructure(true);
+            setActiveStepIndex(0);
+          }}
+          isSaving={isCreatingArrangement}
         />
       )}
 

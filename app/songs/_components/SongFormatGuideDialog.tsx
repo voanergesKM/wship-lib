@@ -24,23 +24,27 @@ import { cn } from "@/lib/utils";
  * актуалізуйте правила та приклад у цьому файлі.
  */
 
-export const EXAMPLE_SONG_MARKUP = `# Вступ
+export const EXAMPLE_SONG_MARKUP = `<section id="Вступ">
 [Am] [F] [C] [G]
+</section>
 
-# Куплет 1
+<section id="1 куплет">
 [Am]Славте Госпо[F]да, бо Він [C]добрий,
 [Dm]Бо навіки [E]милість Його!
+</section>
 
+<section id="Приспів">
 @center
 ## Приспів
 [F]Али[G]луя, [Am]алилуя,
 [F]Бо навіки [E]милість Його!
 ### x2
+</section>
 
-@left
-## Бридж
-[Dm]Ім'я Господнє — [Am]міцна вежа,
-[Dm]Праведник біжить до [E]неї і в безпеці.`;
+<section id="2 куплет">
+[Am]Хай скаже дім [F]Ізраїля нині:
+[Dm]«Бо навіки [E]милість Його!»
+</section>`;
 
 export type SongFormatGuideDialogProps = {
   triggerClassName?: string;
@@ -85,7 +89,7 @@ export function SongFormatGuideDialog({
             Інструкція з розмітки тексту пісні
           </DialogTitle>
           <DialogDescription>
-            Правила запису акордів, заголовків секцій та тегів вирівнювання для коректного відображення парсером.
+            Правила запису акордів, блоків секцій, заголовків та тегів вирівнювання для коректного відображення парсером.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,6 +100,30 @@ export function SongFormatGuideDialog({
           </TabsList>
 
           <TabsContent value="rules" className="flex-1 overflow-y-auto pr-1 space-y-4 mt-3">
+            {/* Теги секцій <section> */}
+            <div className="rounded-xl border bg-card p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-base flex items-center gap-2">
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-primary/10 text-primary font-bold">
+                    &lt;section id=&quot;...&quot;&gt;
+                  </span>
+                  Блоки секцій (куплети, приспіви)
+                </h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Обгортайте логічні блоки пісні в теги <code className="font-mono font-bold">&lt;section id=&quot;Назва&quot;&gt; ... &lt;/section&gt;</code>. Це дає змогу відображати пісню у вигляді адаптивної сітки (Grid), створювати структуру пісні (порядок куплетної форми) та програвати пісню зі скролом:
+              </p>
+              <div className="rounded-lg bg-muted/60 p-2.5 font-mono text-xs text-foreground whitespace-pre">
+{`<section id="1 куплет">
+[Am]Славте Госпо[F]да, бо Він [C]добрий,
+[Dm]Бо навіки [E]милість Його!
+</section>`}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                • Назва секції (наприклад, <code>1 куплет</code>, <code>1к</code>, <code>Приспів</code>, <code>Брідж</code>) використовується в конструкторі структури пісні.
+              </p>
+            </div>
+
             {/* Акорди */}
             <div className="rounded-xl border bg-card p-4 space-y-2">
               <div className="flex items-center justify-between">
@@ -124,10 +152,10 @@ export function SongFormatGuideDialog({
                 <span className="font-mono text-xs px-2 py-0.5 rounded bg-primary/10 text-primary font-bold">
                   # ## ###
                 </span>
-                Секції та заголовки
+                Заголовки та ремарки
               </h4>
               <p className="text-sm text-muted-foreground">
-                Використовуйте знаки решітки на початку рядка для позначення частин пісні:
+                Використовуйте знаки решітки на початку рядка для текстових підзаголовків:
               </p>
               <div className="space-y-1.5 font-mono text-xs">
                 <div className="rounded-lg bg-muted/60 p-2 flex items-center justify-between">

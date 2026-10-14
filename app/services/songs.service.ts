@@ -57,6 +57,31 @@ export interface SongProposalsResponse {
   isOwnerOrAdmin: boolean;
 }
 
+export interface ArrangementItem {
+  section: string;
+  repeat: number;
+}
+
+export interface SongArrangement {
+  _id: string;
+  name: string;
+  items: ArrangementItem[];
+  song: string;
+  createdBy?: {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateArrangementPayload {
+  name: string;
+  items: ArrangementItem[];
+}
+
 export interface SongParams {
   page: number;
   limit: number;
@@ -165,5 +190,31 @@ export const songsService = {
       method: "GET",
       signal,
     });
+  },
+
+  getArrangements: (slug: string, signal?: AbortSignal) => {
+    return baseFetcher<{ arrangements: SongArrangement[] }>(
+      `/songs/${slug}/arrangements`,
+      {
+        method: "GET",
+        signal,
+      },
+    );
+  },
+
+  createArrangement: (slug: string, payload: CreateArrangementPayload) => {
+    return baseFetcher<SongArrangement>(`/songs/${slug}/arrangements`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteArrangement: (slug: string, arrangementId: string) => {
+    return baseFetcher<{ ok: boolean }>(
+      `/songs/${slug}/arrangements/${arrangementId}`,
+      {
+        method: "DELETE",
+      },
+    );
   },
 };

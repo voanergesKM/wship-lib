@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Maximize2 } from "lucide-react";
+import { LayoutGrid, Maximize2, Rows } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { transposeContent } from "@/utils/chordTransposition";
@@ -11,16 +11,24 @@ import { SongSheet } from "./SongSheet";
 type SongTextProps = {
   content: string;
   chordColor?: string;
+  activeSectionId?: string | null;
 };
 
 export function SongText({
   content,
   chordColor = "#22c55e",
+  activeSectionId = null,
 }: SongTextProps) {
   const [showChords, setShowChords] = useState(true);
   const [fontSize, setFontSize] = useState(14);
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [capoFret, setCapoFret] = useState(0);
+  const [layoutMode, setLayoutMode] = useState<"list" | "grid">("list");
+
+  const hasSections = useMemo(
+    () => /<section\s+(?:id|name)=/i.test(content),
+    [content],
+  );
 
   const transposedContent = useMemo(() => {
     const effectiveTranspose = transposeSemitones - capoFret;
@@ -81,19 +89,42 @@ export function SongText({
           onResetCapo={handleResetCapo}
           capoFret={capoFret}
           extraActions={
-            <SongPreview
-              content={transposedContent}
-              chordColor={chordColor}
-              dialogTrigger={
+            <div className="flex items-center gap-2">
+              {hasSections && (
                 <Button
                   size="icon-xs"
-                  variant="outline"
-                  title="Відкрити у модальному вікні"
+                  variant={layoutMode === "grid" ? "secondary" : "outline"}
+                  onClick={() =>
+                    setLayoutMode((m) => (m === "list" ? "grid" : "list"))
+                  }
+                  title={
+                    layoutMode === "grid"
+                      ? "Перемкнути на звичайний список"
+                      : "Перемкнути на грід-сітку (колонки)"
+                  }
                 >
-                  <Maximize2 className="size-4" />
+                  {layoutMode === "grid" ? (
+                    <Rows className="size-4" />
+                  ) : (
+                    <LayoutGrid className="size-4" />
+                  )}
                 </Button>
-              }
-            />
+              )}
+
+              <SongPreview
+                content={transposedContent}
+                chordColor={chordColor}
+                dialogTrigger={
+                  <Button
+                    size="icon-xs"
+                    variant="outline"
+                    title="Відкрити у модальному вікні"
+                  >
+                    <Maximize2 className="size-4" />
+                  </Button>
+                }
+              />
+            </div>
           }
         />
       </div>
@@ -103,6 +134,8 @@ export function SongText({
         fontSize={fontSize}
         showChords={showChords}
         chordColor={chordColor}
+        layoutMode={layoutMode}
+        activeSectionId={activeSectionId}
       />
     </section>
   );

@@ -13,13 +13,22 @@ import {
   Check,
   Music,
   X,
+  ListMusic,
 } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { groupsService, PopulatedSongListItem } from "@/services/groups.service";
 import { PageLoader } from "@/components/shared/PageLoader";
+import { useSongArrangements } from "@/hooks/useSongArrangements";
+import { cn } from "@/lib/utils";
 
 export default function SongListPage({
   params,
@@ -32,13 +41,14 @@ export default function SongListPage({
   // States
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
+  const [editingArrangementSong, setEditingArrangementSong] =
+    useState<PopulatedSongListItem | null>(null);
 
   // Fetch List details
   const { data: list, isLoading: listLoading, error: listError } = useQuery({
     queryKey: ["songList", groupId, listId],
     queryFn: () => groupsService.getSongListDetails(groupId, listId),
   });
-
 
   // Mutations
   const { mutateAsync: updateList, isPending: isUpdating } = useMutation({
@@ -58,6 +68,29 @@ export default function SongListPage({
       queryClient.invalidateQueries({ queryKey: ["songList", groupId, listId] });
     },
   });
+
+  const { mutateAsync: setArrangement, isPending: isSettingArrangement } =
+    useMutation({
+      mutationFn: ({
+        songId,
+        arrangementId,
+      }: {
+        songId: string;
+        arrangementId: string | null;
+      }) =>
+        groupsService.setSongArrangement(
+          groupId,
+          listId,
+          songId,
+          arrangementId,
+        ),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["songList", groupId, listId],
+        });
+        setEditingArrangementSong(null);
+      },
+    });
 
   const handleRename = async () => {
     if (!editedName.trim() || editedName.trim() === list?.name) {
@@ -197,80 +230,110 @@ export default function SongListPage({
 
         {songs.length > 0 ? (
           <div className="border rounded-xl divide-y bg-card overflow-hidden">
-            {songs.map((song: PopulatedSongListItem, index: number) => (
-              <div
-                key={song._id}
-                className="p-4 flex items-center gap-4 hover:bg-muted/10 transition-colors"
-              >
-                {/* Index badge */}
-                <div className="text-sm font-semibold text-muted-foreground w-6 text-center">
-                  {index + 1}
-                </div>
+            {songs.map((song: PopulatedSongListItem, index: number) => {
+              const songArrangement = list.songArrangements?.find(
+                (sa) =>
+                  (typeof sa.song === "object" ? sa.song._id : sa.song) ===
+                  song._id,
+              )?.arrangement;
 
-                {/* Move buttons */}
-                <div className="flex flex-col gap-1">
+              return (
+                <div
+                  key={song._id}
+                  className="p-4 flex items-center gap-4 hover:bg-muted/10 transition-colors"
+                >
+                  {/* Index badge */}
+                  <div className="text-sm font-semibold text-muted-foreground w-6 text-center">
+                    {index + 1}
+                  </div>
+
+                  {/* Move buttons */}
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      disabled={index === 0 || isUpdating}
+                      onClick={() => handleMoveSong(index, "up")}
+                      title="Перемістити вгору"
+                    >
+                      <ArrowUp className="h-4.5 w-4.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      disabled={index === songs.length - 1 || isUpdating}
+                      onClick={() => handleMoveSong(index, "down")}
+                      title="Перемістити вниз"
+                    >
+                      <ArrowDown className="h-4.5 w-4.5" />
+                    </Button>
+                  </div>
+
+                  {/* Song info link */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <Link
+                      href={`/songs/${song.slug}?list=${listId}&group=${groupId}`}
+                      className="block font-bold text-base text-foreground hover:text-primary transition-colors truncate"
+                    >
+                      {song.title}
+                    </Link>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground items-center">
+                      {song.authors && song.authors.length > 0 && (
+                        <span>{song.authors.join(", ")}</span>
+                      )}
+                      {song.key && (
+                        <>
+                          <span className="hidden sm:inline">•</span>
+                          <span>Тональність: {song.key}</span>
+                        </>
+                      )}
+                      {song.bpm && (
+                        <>
+                          <span className="hidden sm:inline">•</span>
+                          <span>Темп: {song.bpm} BPM</span>
+                        </>
+                      )}
+
+                      {/* Arrangement Badge / Trigger */}
+                      <span className="hidden sm:inline">•</span>
+                      {songArrangement ? (
+                        <button
+                          type="button"
+                          onClick={() => setEditingArrangementSong(song)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                        >
+                          <ListMusic className="size-3" />
+                          <span>Структура: {songArrangement.name}</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEditingArrangementSong(song)}
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors cursor-pointer"
+                        >
+                          <ListMusic className="size-3" />
+                          <span>Обрати структуру</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                    disabled={index === 0 || isUpdating}
-                    onClick={() => handleMoveSong(index, "up")}
-                    title="Перемістити вгору"
+                    className="text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0"
+                    onClick={() => handleRemoveSong(song._id)}
+                    disabled={isRemovingSong}
+                    title="Вилучити зі списку"
                   >
-                    <ArrowUp className="h-4.5 w-4.5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                    disabled={index === songs.length - 1 || isUpdating}
-                    onClick={() => handleMoveSong(index, "down")}
-                    title="Перемістити вниз"
-                  >
-                    <ArrowDown className="h-4.5 w-4.5" />
+                    <Trash2 className="h-4.5 w-4.5" />
                   </Button>
                 </div>
-
-                {/* Song info link */}
-                <Link
-                  href={`/songs/${song.slug}?list=${listId}&group=${groupId}`}
-                  className="flex-1 min-w-0"
-                >
-                  <div className="font-bold text-base text-foreground hover:text-primary transition-colors truncate">
-                    {song.title}
-                  </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
-                    {song.authors && song.authors.length > 0 && (
-                      <span>{song.authors.join(", ")}</span>
-                    )}
-                    {song.key && (
-                      <>
-                        <span className="hidden sm:inline">•</span>
-                        <span>Тональність: {song.key}</span>
-                      </>
-                    )}
-                    {song.bpm && (
-                      <>
-                        <span className="hidden sm:inline">•</span>
-                        <span>Темп: {song.bpm} BPM</span>
-                      </>
-                    )}
-                  </div>
-                </Link>
-
-                {/* Actions */}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0"
-                  onClick={() => handleRemoveSong(song._id)}
-                  disabled={isRemovingSong}
-                  title="Вилучити зі списку"
-                >
-                  <Trash2 className="h-4.5 w-4.5" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground space-y-4">
@@ -287,6 +350,120 @@ export default function SongListPage({
           </div>
         )}
       </div>
+
+      {editingArrangementSong && (
+        <SongListArrangementDialog
+          song={editingArrangementSong}
+          currentArrangementId={
+            list.songArrangements?.find(
+              (sa) =>
+                (typeof sa.song === "object" ? sa.song._id : sa.song) ===
+                editingArrangementSong._id,
+            )?.arrangement?._id
+          }
+          open={Boolean(editingArrangementSong)}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setEditingArrangementSong(null);
+          }}
+          onSelect={async (arrangementId) => {
+            await setArrangement({
+              songId: editingArrangementSong._id,
+              arrangementId,
+            });
+          }}
+          isSaving={isSettingArrangement}
+        />
+      )}
     </div>
+  );
+}
+
+function SongListArrangementDialog({
+  song,
+  currentArrangementId,
+  open,
+  onOpenChange,
+  onSelect,
+}: {
+  song: PopulatedSongListItem;
+  currentArrangementId?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (arrangementId: string | null) => Promise<void>;
+  isSaving: boolean;
+}) {
+  const { arrangements, isLoading } = useSongArrangements(song.slug, open);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ListMusic className="size-5 text-primary" />
+            Структура пісні в списку
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Пісня: <span className="font-semibold text-foreground">{song.title}</span>
+          </p>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="py-6 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <Loader2 className="size-4 animate-spin" /> Завантаження структур...
+          </div>
+        ) : (
+          <div className="space-y-2.5 py-2 max-h-72 overflow-y-auto">
+            <div
+              onClick={() => onSelect(null)}
+              className={cn(
+                "p-3 rounded-lg border flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors",
+                !currentArrangementId && "border-primary bg-primary/5 font-semibold",
+              )}
+            >
+              <div>
+                <p className="font-medium text-sm">Без структури</p>
+                <p className="text-xs text-muted-foreground">
+                  Повний текст пісні без виділення порядку
+                </p>
+              </div>
+              {!currentArrangementId && <Check className="size-4 text-primary" />}
+            </div>
+
+            {arrangements.map((arr) => {
+              const isSelected = currentArrangementId === arr._id;
+              const summary = arr.items
+                .map((i) =>
+                  i.repeat > 1 ? `${i.section} - ${i.repeat}р` : i.section,
+                )
+                .join(", ");
+
+              return (
+                <div
+                  key={arr._id}
+                  onClick={() => onSelect(arr._id)}
+                  className={cn(
+                    "p-3 rounded-lg border flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors",
+                    isSelected && "border-primary bg-primary/5 font-semibold",
+                  )}
+                >
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-sm">{arr.name}</p>
+                    <p className="text-xs text-muted-foreground">{summary}</p>
+                  </div>
+                  {isSelected && <Check className="size-4 text-primary" />}
+                </div>
+              );
+            })}
+
+            {arrangements.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-2 italic">
+                Для цієї пісні ще немає збережених структур. Ви можете створити
+                структуру на сторінці пісні.
+              </p>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

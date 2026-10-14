@@ -5,8 +5,8 @@ import {
   InferSchemaType,
   HydratedDocument,
 } from "mongoose";
-import { User } from "./User";
-import { Song } from "./Song";
+import "./User";
+import "./Song";
 
 const SongListSchema = new Schema(
   {
@@ -24,6 +24,21 @@ const SongListSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "Song",
+      },
+    ],
+    songArrangements: [
+      {
+        _id: false,
+        song: {
+          type: Schema.Types.ObjectId,
+          ref: "Song",
+          required: true,
+        },
+        arrangement: {
+          type: Schema.Types.ObjectId,
+          ref: "Arrangement",
+          required: true,
+        },
       },
     ],
     createdBy: {

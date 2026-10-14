@@ -23,6 +23,7 @@ export function SongView({
   youtube,
   visibility,
   creatorDisplayName,
+  activeSectionId,
 }: {
   title: string;
   tags: string[];
@@ -33,6 +34,7 @@ export function SongView({
   youtube: YouTubeLink[];
   visibility: SongVisibility;
   creatorDisplayName?: string;
+  activeSectionId?: string | null;
 }) {
   return (
     <Tabs defaultValue="text" className="w-full gap-5">
@@ -52,7 +54,7 @@ export function SongView({
       </TabsList>
 
       <TabsContent value="text">
-        <SongText content={document} />
+        <SongText content={document} activeSectionId={activeSectionId} />
       </TabsContent>
 
       <TabsContent value="media">

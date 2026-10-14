@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { chain } from "@/lib/api/composeRoute";
 import { requireAuth, requireGroupAccess } from "@/lib/api/routeGuards";
 import { SongList } from "@/models/SongList";
+import "@/models/Arrangement";
+import "@/models/Song";
+import "@/models/User";
 
 type ListRouteParams = {
   groupId: string;
@@ -17,6 +20,7 @@ export const GET = chain<ListRouteParams>()
 
       const list = await SongList.findOne({ _id: listId, groupId })
         .populate("songs")
+        .populate("songArrangements.arrangement")
         .populate("createdBy", "firstName username")
         .populate("updatedBy", "firstName username");
 
@@ -71,7 +75,9 @@ export const PATCH = chain<ListRouteParams>()
         { _id: listId, groupId },
         { $set: updateData },
         { new: true },
-      ).populate("songs");
+      )
+        .populate("songs")
+        .populate("songArrangements.arrangement");
 
       if (!list) {
         return NextResponse.json(

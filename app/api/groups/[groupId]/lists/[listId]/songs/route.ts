@@ -18,7 +18,7 @@ export const POST = chain<ListSongsRouteParams>()
   .handler(async (request, { params, session }) => {
     try {
       const { groupId, listId } = params;
-      const { songId } = await request.json();
+      const { songId, arrangementId } = await request.json();
 
       if (!songId) {
         return NextResponse.json(
@@ -44,6 +44,12 @@ export const POST = chain<ListSongsRouteParams>()
       }
 
       list.songs.push(songId);
+      if (arrangementId) {
+        list.songArrangements.push({
+          song: songId,
+          arrangement: arrangementId,
+        });
+      }
       list.updatedBy = session.user.id;
       await list.save();
 
@@ -82,6 +88,11 @@ export const DELETE = chain<ListSongsRouteParams>()
 
       const initialLength = list.songs.length;
       list.songs = list.songs.filter((song: SongRef) => !isSameSong(song, songId));
+      if (list.songArrangements) {
+        list.songArrangements = list.songArrangements.filter(
+          (sa: { song: { toString(): string } }) => sa.song.toString() !== songId,
+        );
+      }
 
       if (list.songs.length === initialLength) {
         return NextResponse.json(

@@ -1,3 +1,9 @@
+export type SectionBlock = {
+  type: "section";
+  id: string;
+  blocks: Block[];
+};
+
 export type Block =
   | {
       type: "heading";
@@ -13,7 +19,8 @@ export type Block =
   | {
       type: "empty";
       align: "left";
-    };
+    }
+  | SectionBlock;
 
 export type Part = {
   chord?: string;

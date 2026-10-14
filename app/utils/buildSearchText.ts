@@ -1,4 +1,5 @@
 import { parseSong } from "@/utils/parseSong";
+import { Block } from "@/types/parse-song.types";
 
 export function buildSearchText(song: {
   title?: string;
@@ -14,23 +15,29 @@ export function buildSearchText(song: {
   ]);
 }
 
+function extractBlockText(block: Block): string {
+  if (block.type === "heading") {
+    return block.text;
+  }
+
+  if (block.type === "lyrics") {
+    return block.parts.map((part) => part.lyric).join("");
+  }
+
+  if (block.type === "section") {
+    return `${block.id} ${block.blocks.map(extractBlockText).join(" ")}`;
+  }
+
+  return "";
+}
+
 function getDocumentSearchText(document?: string) {
   if (!document) {
     return "";
   }
 
   return parseSong(document)
-    .map((block) => {
-      if (block.type === "heading") {
-        return block.text;
-      }
-
-      if (block.type === "lyrics") {
-        return block.parts.map((part) => part.lyric).join("");
-      }
-
-      return "";
-    })
+    .map(extractBlockText)
     .join(" ");
 }
 

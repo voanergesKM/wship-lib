@@ -37,7 +37,8 @@ const ArrangementSchema = new Schema(
       default: [],
     },
 
-    song: { type: Schema.Types.ObjectId, ref: "Song" },
+    song: { type: Schema.Types.ObjectId, ref: "Song", required: true, index: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true },
 );
