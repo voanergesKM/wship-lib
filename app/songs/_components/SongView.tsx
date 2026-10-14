@@ -22,6 +22,7 @@ export function SongView({
   document,
   youtube,
   visibility,
+  creatorDisplayName,
 }: {
   title: string;
   tags: string[];
@@ -31,6 +32,7 @@ export function SongView({
   document: string;
   youtube: YouTubeLink[];
   visibility: SongVisibility;
+  creatorDisplayName?: string;
 }) {
   return (
     <Tabs defaultValue="text" className="w-full gap-5">
@@ -75,6 +77,9 @@ export function SongView({
                 label="YouTube"
                 value={youtube.length ? `${youtube.length} відео` : undefined}
               />
+              {creatorDisplayName && (
+                <MetaItem label="Додав до збірки" value={creatorDisplayName} />
+              )}
             </dl>
           </aside>
         </div>

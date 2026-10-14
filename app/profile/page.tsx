@@ -2,7 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Mail, User, Loader2, Check, AlertCircle } from "lucide-react";
+import {
+  Mail,
+  User,
+  Loader2,
+  Check,
+  AlertCircle,
+  GitPullRequest,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Ban,
+  ExternalLink,
+} from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +24,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { groupsService } from "@/services/groups.service";
 import { useAuth } from "@/components/providers/AuthContext";
 import { PageLoader } from "@/components/shared/PageLoader";
+import { useUserProposals } from "@/hooks/useSongProposals";
+import { SongProposalItem } from "@/services/songs.service";
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
@@ -73,6 +88,9 @@ export default function ProfilePage() {
         initialEmail={user?.email || ""}
         onEmailSaved={refreshUser}
       />
+
+      {/* Proposals Section */}
+      <ProfileProposalsSection />
     </div>
   );
 }
@@ -201,4 +219,140 @@ function ProfileEmailSection({
       )}
     </div>
   );
+}
+
+function ProfileProposalsSection() {
+  const { data, isLoading } = useUserProposals();
+  const proposals = data?.proposals || [];
+
+  return (
+    <div className="border rounded-xl p-5 bg-card/50 space-y-4">
+      <div className="space-y-1">
+        <h2 className="font-bold text-lg flex items-center gap-2">
+          <GitPullRequest className="h-5 w-5 text-primary" />
+          Мої пропозиції змін до пісень
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Історія ваших запропонованих змін до пісень та їхній поточний статус розгляду.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center p-8 text-muted-foreground text-sm">
+          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          Завантаження пропозицій...
+        </div>
+      ) : proposals.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+          Ви ще не надсилали жодної пропозиції змін до пісень.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {proposals.map((proposal) => {
+            const song =
+              typeof proposal.song === "object" && proposal.song !== null
+                ? proposal.song
+                : null;
+            const songTitle =
+              song?.title || proposal.proposedData?.title || "Пісня";
+            const songSlug = song?.slug;
+
+            return (
+              <div
+                key={proposal._id}
+                className="border rounded-lg p-4 bg-background/50 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    {songSlug ? (
+                      <Link
+                        href={`/songs/${songSlug}`}
+                        className="font-semibold text-base hover:underline flex items-center gap-1.5"
+                      >
+                        {songTitle}
+                        <ExternalLink className="size-3.5 text-muted-foreground" />
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-base">
+                        {songTitle}
+                      </span>
+                    )}
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <Clock className="size-3" />
+                      Подано{" "}
+                      {new Date(proposal.createdAt).toLocaleDateString(
+                        "uk-UA",
+                      )}
+                    </p>
+                  </div>
+
+                  <ProposalStatusBadge status={proposal.status} />
+                </div>
+
+                {proposal.comment && (
+                  <div className="text-xs bg-muted/40 p-2.5 rounded-md border text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      Ваш коментар:{" "}
+                    </span>
+                    {proposal.comment}
+                  </div>
+                )}
+
+                {proposal.status === "rejected" && (
+                  <div className="text-xs bg-destructive/10 text-destructive dark:text-red-400 p-2.5 rounded-md border border-destructive/20">
+                    <span className="font-semibold">Причина відхилення: </span>
+                    {proposal.reviewComment || "Причину не вказано"}
+                  </div>
+                )}
+
+                {proposal.status === "approved" && proposal.reviewComment && (
+                  <div className="text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 p-2.5 rounded-md border border-emerald-500/20">
+                    <span className="font-semibold">Коментар автора: </span>
+                    {proposal.reviewComment}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProposalStatusBadge({
+  status,
+}: {
+  status: SongProposalItem["status"];
+}) {
+  switch (status) {
+    case "pending":
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+          <Clock className="size-3" />
+          Очікує розгляду
+        </span>
+      );
+    case "approved":
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+          <CheckCircle2 className="size-3" />
+          Прийнято
+        </span>
+      );
+    case "rejected":
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+          <XCircle className="size-3" />
+          Відхилено
+        </span>
+      );
+    case "cancelled":
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border">
+          <Ban className="size-3" />
+          Скасовано
+        </span>
+      );
+  }
 }
