@@ -3,83 +3,18 @@ import { getServerAuth } from "@/lib/serverAuth";
 import { Song } from "@/models/Song";
 import { normalizeYouTubeLinks } from "@/utils/youtubeLinks";
 import { connectDB } from "@/lib/db";
-
-type SongSearchQuery = {
-  $or?: Array<
-    | { title: { $regex: string; $options: string } }
-    | { tags: { $in: RegExp[] } }
-    | { authors: { $in: RegExp[] } }
-    | { searchText: { $regex: string; $options: string } }
-  >;
-};
+import { getSongsList } from "@/lib/data/songs";
 
 export async function GET(request: NextRequest) {
-  await connectDB();
-
   try {
     const searchParams = request.nextUrl.searchParams;
-
     const page = Number(searchParams.get("page")) || 1;
-
     const limit = Number(searchParams.get("limit")) || 10;
-
     const search = searchParams.get("search")?.trim() || "";
 
-    const query: SongSearchQuery = {};
+    const result = await getSongsList({ page, limit, search });
 
-    if (search) {
-      query.$or = [
-        {
-          title: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-
-        {
-          tags: {
-            $in: [new RegExp(search, "i")],
-          },
-        },
-
-        {
-          authors: {
-            $in: [new RegExp(search, "i")],
-          },
-        },
-
-        {
-          searchText: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-      ];
-    }
-
-    const [songs, total] = await Promise.all([
-      Song.find(query)
-        .sort({
-          createdAt: -1,
-        })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
-
-      Song.countDocuments(query),
-    ]);
-
-    return NextResponse.json({
-      data: songs,
-
-      pagination: {
-        page,
-        limit,
-        total,
-
-        pages: Math.ceil(total / limit),
-      },
-    });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching songs:", error);
 

@@ -1,6 +1,6 @@
 import { isServer } from "@tanstack/react-query";
 
-interface FetchOptions extends RequestInit {}
+type FetchOptions = RequestInit;
 
 export async function baseFetcher<T>(
   url: string,
@@ -10,7 +10,12 @@ export async function baseFetcher<T>(
   const finalOptions = { ...options };
 
   if (isServer) {
-    const host = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const host =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_WEBAPP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000");
     finalUrl = `${host}/api${url}`;
 
     const { headers: nextHeaders } = await import("next/headers");
