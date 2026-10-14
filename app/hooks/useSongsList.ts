@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { songsListOptions } from "@/lib/queries/songQueries";
 
-const DEFAULT_PAGE_SIZE = 18;
+const DEFAULT_PAGE_SIZE = 9;
 
 export const useSongsList = () => {
   const searchParams = useSearchParams();
