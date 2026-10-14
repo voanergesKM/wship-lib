@@ -1,9 +1,7 @@
 "use client";
 
-import { useTransition, useState } from "react";
-
+import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
 import { Search } from "lucide-react";
 
 import { useDebouncedValue } from "@/hooks/useDebounce";
@@ -14,39 +12,53 @@ export const SearchSong = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const urlSearch = searchParams.get("search") ?? "";
+
   // Local controlled value for the input; URL is the source of truth on mount.
-  const [value, setValue] = useState(searchParams.get("search") ?? "");
+  const [value, setValue] = useState(urlSearch);
+
+  // Track the last search value pushed to the URL to distinguish internal
+  // updates from external navigation (e.g. browser Back / Forward).
+  const lastPushedSearchRef = useRef(urlSearch);
 
   const [, startTransition] = useTransition();
 
-  const debouncedValue = useDebouncedValue(value, 500);
+  const debouncedValue = useDebouncedValue(value, 400);
 
-  // Keep local input in sync when the URL param changes from outside
-  // (e.g., browser Back / Forward).  We only overwrite when the URL param
-  // diverges from the debounced value so we don't interrupt mid-typing.
-  const urlSearch = searchParams.get("search") ?? "";
-  if (urlSearch !== debouncedValue && urlSearch !== value) {
-    setValue(urlSearch);
-  }
+  // Sync state if URL search param changes from the outside (e.g. browser Back / Forward)
+  useEffect(() => {
+    if (urlSearch !== lastPushedSearchRef.current) {
+      lastPushedSearchRef.current = urlSearch;
+      setValue(urlSearch);
+    }
+  }, [urlSearch]);
+
+  // Update the URL only when the debounced value changes
+  useEffect(() => {
+    const trimmed = debouncedValue.trim();
+    const currentUrlSearch = searchParams.get("search") ?? "";
+
+    if (trimmed === currentUrlSearch) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (trimmed) {
+      params.set("search", trimmed);
+    } else {
+      params.delete("search");
+    }
+
+    params.set("page", "1");
+    lastPushedSearchRef.current = trimmed;
+
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  }, [debouncedValue, pathname, router, searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = e.target.value;
-    setValue(next);
-
-    // Schedule the URL update as a non-urgent transition so it doesn't block input.
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      const debounced = next.trim();
-
-      if (debounced) {
-        params.set("search", debounced);
-      } else {
-        params.delete("search");
-      }
-
-      params.set("page", "1");
-      router.replace(`${pathname}?${params.toString()}`);
-    });
+    setValue(e.target.value);
   };
 
   return (
@@ -61,3 +73,4 @@ export const SearchSong = () => {
     />
   );
 };
+
