@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useAuth } from "../providers/AuthContext";
+
 import ThemeToggle from "../ToggleTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ArrowLeft, LogOut, Plus, UserRound, Users } from "lucide-react";
@@ -32,10 +34,12 @@ export const Header = () => {
       <div className="text-lg font-semibold w-full max-w-[1920px] m-auto px-4 flex gap-2 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img 
-              src="/logo.svg" 
-              alt="Worship Library" 
-              className="w-8 h-8 dark:invert dark:brightness-100 dark:contrast-100"
+            <Image
+              src="/logo.svg"
+              alt="Worship Library"
+              width={32}
+              height={32}
+              className="dark:invert dark:brightness-100 dark:contrast-100"
             />
             <span className="hidden sm:inline">Worship Library</span>
           </Link>

@@ -54,11 +54,20 @@ export interface UserInvitationInfo {
   createdAt: string;
 }
 
+export interface PopulatedSongListItem {
+  _id: string;
+  slug: string;
+  title: string;
+  authors?: string[];
+  key?: string;
+  bpm?: number;
+}
+
 export interface SongListDetails {
   _id: string;
   name: string;
   groupId: string;
-  songs: any[]; // Populated songs
+  songs: PopulatedSongListItem[];
   createdBy: {
     _id: string;
     firstName: string;

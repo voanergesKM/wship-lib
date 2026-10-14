@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -12,13 +12,13 @@ import {
   Edit2,
   Check,
   Music,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { groupsService } from "@/services/groups.service";
+import { groupsService, PopulatedSongListItem } from "@/services/groups.service";
 import { PageLoader } from "@/components/shared/PageLoader";
 
 export default function SongListPage({
@@ -26,7 +26,6 @@ export default function SongListPage({
 }: {
   params: Promise<{ groupId: string; listId: string }>;
 }) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { groupId, listId } = use(params);
 
@@ -40,11 +39,6 @@ export default function SongListPage({
     queryFn: () => groupsService.getSongListDetails(groupId, listId),
   });
 
-  useEffect(() => {
-    if (list?.name) {
-      setEditedName(list.name);
-    }
-  }, [list]);
 
   // Mutations
   const { mutateAsync: updateList, isPending: isUpdating } = useMutation({
@@ -87,7 +81,7 @@ export default function SongListPage({
     newSongs[targetIndex] = temp;
 
     // Extract just the string IDs for the update payload
-    const songIds = newSongs.map((song) => song._id || song);
+    const songIds = newSongs.map((song) => song._id);
     await updateList({ songs: songIds });
   };
 
@@ -163,7 +157,10 @@ export default function SongListPage({
                 size="icon"
                 variant="ghost"
                 className="opacity-0 group-hover/title:opacity-100 transition-opacity h-8 w-8 text-muted-foreground"
-                onClick={() => setIsEditingName(true)}
+                onClick={() => {
+                  setEditedName(list.name);
+                  setIsEditingName(true);
+                }}
                 title="Перейменувати"
               >
                 <Edit2 className="h-4 w-4" />
@@ -200,7 +197,7 @@ export default function SongListPage({
 
         {songs.length > 0 ? (
           <div className="border rounded-xl divide-y bg-card overflow-hidden">
-            {songs.map((song: any, index: number) => (
+            {songs.map((song: PopulatedSongListItem, index: number) => (
               <div
                 key={song._id}
                 className="p-4 flex items-center gap-4 hover:bg-muted/10 transition-colors"
@@ -291,25 +288,5 @@ export default function SongListPage({
         )}
       </div>
     </div>
-  );
-}
-
-function X(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
   );
 }

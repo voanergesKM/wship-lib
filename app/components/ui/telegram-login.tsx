@@ -51,9 +51,10 @@ export function TelegramLoginWidget({
 
     containerRef.current.appendChild(script);
 
+    const container = containerRef.current;
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
+      if (container) {
+        container.innerHTML = "";
       }
       delete (window as any).onTelegramAuth;
     };

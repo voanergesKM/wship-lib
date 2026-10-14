@@ -3,10 +3,11 @@
 import React, {
   createContext,
   useContext,
-  useState,
-  useEffect,
+  useCallback,
+  useMemo,
   ReactNode,
 } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface AuthUser {
   id: string;
@@ -37,48 +38,54 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const refreshUser = async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated) {
-          setUser(data.user);
-          setIsLoading(false);
-          return;
-        }
+  const { data, isLoading } = useQuery({
+    queryKey: ["authMe"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json.authenticated ? (json.user as AuthUser) : null;
+      } catch (err) {
+        console.error("Failed to fetch auth session:", err);
+        return null;
       }
-      setUser(null);
-    } catch (err) {
-      console.error("Failed to refresh user session:", err);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const logout = async () => {
+  const user = data ?? null;
+
+  const refreshUser = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["authMe"] });
+  }, [queryClient]);
+
+  const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
+      queryClient.setQueryData(["authMe"], null);
       window.location.href = "/";
     } catch (err) {
       console.error("Failed to logout:", err);
     }
-  };
+  }, [queryClient]);
 
-  useEffect(() => {
-    refreshUser();
-  }, []);
+  const contextValue = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      refreshUser,
+      logout,
+    }),
+    [user, isLoading, refreshUser, logout]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, refreshUser, logout }}
-    >
+    <AuthContext value={contextValue}>
       {children}
-    </AuthContext.Provider>
+    </AuthContext>
   );
 }

@@ -1,52 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail, User, Loader2, Check, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { groupsService } from "@/services/groups.service";
 import { useAuth } from "@/components/providers/AuthContext";
 import { PageLoader } from "@/components/shared/PageLoader";
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
-  const queryClient = useQueryClient();
-
-  const [emailValue, setEmailValue] = useState("");
-  const [emailStatus, setEmailStatus] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
-
-  // Sync email input when user loads
-  useEffect(() => {
-    setEmailValue(user?.email || "");
-  }, [user?.email]);
-
-  const { mutateAsync: saveEmail, isPending: isSavingEmail } = useMutation({
-    mutationFn: groupsService.updateEmail,
-    onSuccess: async () => {
-      await refreshUser();
-      queryClient.invalidateQueries({ queryKey: ["invitations"] });
-      setEmailStatus({ type: "success", message: "Пошту успішно оновлено!" });
-      setTimeout(() => setEmailStatus(null), 3000);
-    },
-    onError: (err: any) => {
-      setEmailStatus({
-        type: "error",
-        message: err.message || "Не вдалося оновити пошту",
-      });
-    },
-  });
-
-  const handleSaveEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setEmailStatus(null);
-    await saveEmail(emailValue.trim());
-  };
 
   if (authLoading) return <PageLoader />;
 
@@ -77,17 +44,16 @@ export default function ProfilePage() {
       <div className="border rounded-xl p-5 bg-card/50 space-y-4">
         <h2 className="font-bold text-lg">Telegram акаунт</h2>
         <div className="flex items-center gap-4">
-          {user?.photoUrl ? (
-            <img
-              src={user.photoUrl}
-              alt={user.firstName}
-              className="w-14 h-14 rounded-full object-cover border"
+          <Avatar className="w-14 h-14 border">
+            <AvatarImage
+              src={user?.photoUrl || undefined}
+              alt={user?.firstName || ""}
+              className="object-cover"
             />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-xl font-bold text-muted-foreground">
+            <AvatarFallback className="text-xl font-bold">
               {user?.firstName?.[0] || "?"}
-            </div>
-          )}
+            </AvatarFallback>
+          </Avatar>
           <div className="space-y-1">
             <p className="font-bold text-lg">{user?.firstName}</p>
             {user?.username && (
@@ -102,80 +68,137 @@ export default function ProfilePage() {
       </div>
 
       {/* Email Section */}
-      <div className="border rounded-xl p-5 bg-card/50 space-y-4">
-        <div className="space-y-1">
-          <h2 className="font-bold text-lg flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            Електронна пошта
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Прив&apos;яжіть пошту, щоб отримувати запрошення у групи. Після збереження всі
-            наявні запрошення на цю адресу будуть автоматично відображені у вашому акаунті.
-          </p>
+      <ProfileEmailSection
+        key={user?.email || "no-email"}
+        initialEmail={user?.email || ""}
+        onEmailSaved={refreshUser}
+      />
+    </div>
+  );
+}
+
+function ProfileEmailSection({
+  initialEmail,
+  onEmailSaved,
+}: {
+  initialEmail: string;
+  onEmailSaved: () => Promise<void>;
+}) {
+  const queryClient = useQueryClient();
+  const [emailValue, setEmailValue] = useState(initialEmail);
+  const [emailStatus, setEmailStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const { mutateAsync: saveEmail, isPending: isSavingEmail } = useMutation({
+    mutationFn: groupsService.updateEmail,
+    onSuccess: async () => {
+      await onEmailSaved();
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      setEmailStatus({ type: "success", message: "Пошту успішно оновлено!" });
+      timeoutRef.current = setTimeout(() => setEmailStatus(null), 3000);
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error ? err.message : "Не вдалося оновити пошту";
+      setEmailStatus({
+        type: "error",
+        message,
+      });
+    },
+  });
+
+  const handleSaveEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailStatus(null);
+    await saveEmail(emailValue.trim());
+  };
+
+  return (
+    <div className="border rounded-xl p-5 bg-card/50 space-y-4">
+      <div className="space-y-1">
+        <h2 className="font-bold text-lg flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          Електронна пошта
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Прив&apos;яжіть пошту, щоб отримувати запрошення у групи. Після збереження всі
+          наявні запрошення на цю адресу будуть автоматично відображені у вашому акаунті.
+        </p>
+      </div>
+
+      {emailStatus && (
+        <div
+          className={`flex items-center gap-2 p-3 rounded-lg text-sm font-medium ${
+            emailStatus.type === "success"
+              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+              : "bg-destructive/10 border border-destructive/20 text-destructive"
+          }`}
+        >
+          {emailStatus.type === "success" ? (
+            <Check className="h-4 w-4 shrink-0" />
+          ) : (
+            <AlertCircle className="h-4 w-4 shrink-0" />
+          )}
+          {emailStatus.message}
+        </div>
+      )}
+
+      <form onSubmit={handleSaveEmail} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="profile-email">Email адреса</Label>
+          <Input
+            id="profile-email"
+            type="email"
+            placeholder="name@example.com"
+            value={emailValue}
+            onChange={(e) => setEmailValue(e.target.value)}
+            disabled={isSavingEmail}
+          />
         </div>
 
-        {emailStatus && (
-          <div
-            className={`flex items-center gap-2 p-3 rounded-lg text-sm font-medium ${
-              emailStatus.type === "success"
-                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                : "bg-destructive/10 border border-destructive/20 text-destructive"
-            }`}
+        <div className="flex items-center gap-3">
+          <Button
+            type="submit"
+            disabled={isSavingEmail || emailValue === initialEmail}
           >
-            {emailStatus.type === "success" ? (
-              <Check className="h-4 w-4 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 shrink-0" />
-            )}
-            {emailStatus.message}
-          </div>
-        )}
+            {isSavingEmail ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : null}
+            Зберегти пошту
+          </Button>
 
-        <form onSubmit={handleSaveEmail} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="profile-email">Email адреса</Label>
-            <Input
-              id="profile-email"
-              type="email"
-              placeholder="name@example.com"
-              value={emailValue}
-              onChange={(e) => setEmailValue(e.target.value)}
-              disabled={isSavingEmail}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
+          {initialEmail && emailValue !== initialEmail && (
             <Button
-              type="submit"
-              disabled={isSavingEmail || emailValue === (user?.email || "")}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setEmailValue(initialEmail)}
+              disabled={isSavingEmail}
             >
-              {isSavingEmail ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              Зберегти пошту
+              Скасувати
             </Button>
+          )}
+        </div>
+      </form>
 
-            {user?.email && emailValue !== user.email && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setEmailValue(user.email || "")}
-                disabled={isSavingEmail}
-              >
-                Скасувати
-              </Button>
-            )}
-          </div>
-        </form>
-
-        {user?.email && (
-          <p className="text-xs text-muted-foreground">
-            Поточна пошта:{" "}
-            <span className="font-semibold text-foreground">{user.email}</span>
-          </p>
-        )}
-      </div>
+      {initialEmail && (
+        <p className="text-xs text-muted-foreground">
+          Поточна пошта:{" "}
+          <span className="font-semibold text-foreground">{initialEmail}</span>
+        </p>
+      )}
     </div>
   );
 }

@@ -40,6 +40,7 @@ import {
 import { groupsService } from "@/services/groups.service";
 import { useAuth } from "@/components/providers/AuthContext";
 import { PageLoader } from "@/components/shared/PageLoader";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function GroupDetailsPage({
   params,
@@ -55,14 +56,20 @@ export default function GroupDetailsPage({
   // States
   const [activeTab, setActiveTab] = useState("lists");
   const [newListName, setNewListName] = useState("");
-  const [inviteType, setInviteType] = useState<"telegram" | "email">("telegram");
+  const [inviteType, setInviteType] = useState<"telegram" | "email">(
+    "telegram",
+  );
   const [inviteValue, setInviteValue] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
   const [errorInvite, setErrorInvite] = useState<string | null>(null);
   const [successInvite, setSuccessInvite] = useState<string | null>(null);
 
   // Fetch Group and Lists
-  const { data: group, isLoading: groupLoading, error: groupError } = useQuery({
+  const {
+    data: group,
+    isLoading: groupLoading,
+    error: groupError,
+  } = useQuery({
     queryKey: ["group", groupId],
     queryFn: () => groupsService.getGroupDetails(groupId),
   });
@@ -74,7 +81,7 @@ export default function GroupDetailsPage({
 
   // Permissions check
   const currentUserMember = group?.members?.find(
-    (m: any) => m.userId?._id === user?.id
+    (m: any) => m.userId?._id === user?.id,
   );
   const isAdminOrOwner =
     currentUserMember && ["owner", "admin"].includes(currentUserMember.role);
@@ -90,7 +97,8 @@ export default function GroupDetailsPage({
   });
 
   const { mutateAsync: deleteList } = useMutation({
-    mutationFn: (listId: string) => groupsService.deleteSongList(groupId, listId),
+    mutationFn: (listId: string) =>
+      groupsService.deleteSongList(groupId, listId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groupLists", groupId] });
     },
@@ -121,8 +129,13 @@ export default function GroupDetailsPage({
   });
 
   const { mutateAsync: cancelInvite } = useMutation({
-    mutationFn: ({ type, value }: { type: "telegram" | "email"; value: string }) =>
-      groupsService.cancelInvitation(groupId, type, value),
+    mutationFn: ({
+      type,
+      value,
+    }: {
+      type: "telegram" | "email";
+      value: string;
+    }) => groupsService.cancelInvitation(groupId, type, value),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
     },
@@ -158,7 +171,7 @@ export default function GroupDetailsPage({
   const handleDeleteGroup = async () => {
     if (
       confirm(
-        "Увага! Ви видалите групу та всі її списки пісень назавжди. Продовжити?"
+        "Увага! Ви видалите групу та всі її списки пісень назавжди. Продовжити?",
       )
     ) {
       await deleteGroup();
@@ -170,7 +183,9 @@ export default function GroupDetailsPage({
   if (groupError || !group) {
     return (
       <div className="text-center py-12 space-y-4">
-        <h1 className="text-2xl font-bold text-destructive">Помилка завантаження</h1>
+        <h1 className="text-2xl font-bold text-destructive">
+          Помилка завантаження
+        </h1>
         <p className="text-muted-foreground">
           Групу не знайдено або у вас немає доступу.
         </p>
@@ -304,7 +319,9 @@ export default function GroupDetailsPage({
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      if (confirm("Ви впевнені, що хочете видалити цей список?")) {
+                      if (
+                        confirm("Ви впевнені, що хочете видалити цей список?")
+                      ) {
                         deleteList(list._id);
                       }
                     }}
@@ -319,7 +336,9 @@ export default function GroupDetailsPage({
           ) : (
             <div className="border border-dashed rounded-xl p-8 text-center text-muted-foreground">
               <ListMusic className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="font-medium text-foreground">Немає списків пісень</p>
+              <p className="font-medium text-foreground">
+                Немає списків пісень
+              </p>
               <p className="text-sm mt-1">Створіть свій перший список вище</p>
             </div>
           )}
@@ -345,17 +364,16 @@ export default function GroupDetailsPage({
                       className="p-4 flex items-center justify-between hover:bg-muted/10 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-sm text-muted-foreground overflow-hidden shrink-0">
-                          {mUser?.photoUrl ? (
-                            <img
-                              src={mUser.photoUrl}
-                              alt={mUser.firstName}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            mUser?.firstName?.[0] || "?"
-                          )}
-                        </div>
+                        <Avatar className="w-10 h-10 shrink-0">
+                          <AvatarImage
+                            src={mUser?.photoUrl || ""}
+                            alt={mUser?.firstName || ""}
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="text-sm font-bold">
+                            {mUser?.firstName?.[0] || "?"}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <p className="font-bold text-sm">
                             {mUser?.firstName || "Гість"}{" "}
@@ -366,7 +384,9 @@ export default function GroupDetailsPage({
                             )}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {mUser?.username ? `@${mUser.username}` : "Немає нікнейму"}
+                            {mUser?.username
+                              ? `@${mUser.username}`
+                              : "Немає нікнейму"}
                           </p>
                         </div>
                       </div>
@@ -375,29 +395,31 @@ export default function GroupDetailsPage({
                           {member.role === "owner"
                             ? "Власник"
                             : member.role === "admin"
-                            ? "Адмін"
-                            : "Учасник"}
+                              ? "Адмін"
+                              : "Учасник"}
                         </span>
 
-                        {isAdminOrOwner && !isCurrent && member.role !== "owner" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Ви дійсно хочете видалити ${mUser?.firstName} з групи?`
-                                )
-                              ) {
-                                removeMember(mUser._id);
-                              }
-                            }}
-                            className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                            title="Видалити з групи"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        {isAdminOrOwner &&
+                          !isCurrent &&
+                          member.role !== "owner" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Ви дійсно хочете видалити ${mUser?.firstName} з групи?`,
+                                  )
+                                ) {
+                                  removeMember(mUser._id);
+                                }
+                              }}
+                              className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                              title="Видалити з групи"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                       </div>
                     </div>
                   );
@@ -405,57 +427,59 @@ export default function GroupDetailsPage({
               </div>
 
               {/* Pending Invites */}
-              {isAdminOrOwner && group.invitations && group.invitations.length > 0 && (
-                <div className="space-y-3 pt-4">
-                  <h4 className="font-bold text-base text-muted-foreground">
-                    Надіслані запрошення
-                  </h4>
-                  <div className="border border-dashed rounded-xl divide-y bg-muted/5">
-                    {group.invitations.map((invite: any, index: number) => (
-                      <div
-                        key={index}
-                        className="p-3 flex items-center justify-between"
-                      >
-                        <div>
-                          <p className="text-sm font-semibold flex items-center gap-1.5">
-                            {invite.type === "telegram" ? (
-                              <span className="bg-sky-500/10 text-sky-600 dark:text-sky-400 text-xs px-1.5 py-0.5 rounded">
-                                TG
-                              </span>
-                            ) : (
-                              <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs px-1.5 py-0.5 rounded">
-                                Email
-                              </span>
-                            )}
-                            {invite.value}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Запросив: {invite.invitedBy?.firstName} • Роль:{" "}
-                            {invite.role === "admin" ? "Адмін" : "Учасник"}
-                          </p>
-                        </div>
-                        {/* Remove pending invitation */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={async () => {
-                            if (confirm("Скасувати це запрошення?")) {
-                              await cancelInvite({
-                                type: invite.type,
-                                value: invite.value,
-                              });
-                            }
-                          }}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          title="Скасувати запрошення"
+              {isAdminOrOwner &&
+                group.invitations &&
+                group.invitations.length > 0 && (
+                  <div className="space-y-3 pt-4">
+                    <h4 className="font-bold text-base text-muted-foreground">
+                      Надіслані запрошення
+                    </h4>
+                    <div className="border border-dashed rounded-xl divide-y bg-muted/5">
+                      {group.invitations.map((invite: any, index: number) => (
+                        <div
+                          key={index}
+                          className="p-3 flex items-center justify-between"
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div>
+                            <p className="text-sm font-semibold flex items-center gap-1.5">
+                              {invite.type === "telegram" ? (
+                                <span className="bg-sky-500/10 text-sky-600 dark:text-sky-400 text-xs px-1.5 py-0.5 rounded">
+                                  TG
+                                </span>
+                              ) : (
+                                <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs px-1.5 py-0.5 rounded">
+                                  Email
+                                </span>
+                              )}
+                              {invite.value}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              Запросив: {invite.invitedBy?.firstName} • Роль:{" "}
+                              {invite.role === "admin" ? "Адмін" : "Учасник"}
+                            </p>
+                          </div>
+                          {/* Remove pending invitation */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async () => {
+                              if (confirm("Скасувати це запрошення?")) {
+                                await cancelInvite({
+                                  type: invite.type,
+                                  value: invite.value,
+                                });
+                              }
+                            }}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            title="Скасувати запрошення"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Invite Form (only for Admin/Owner) */}
@@ -466,7 +490,8 @@ export default function GroupDetailsPage({
                   Запросити учасника
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Запросіть користувача за його нікнеймом у Telegram або за поштовою адресою.
+                  Запросіть користувача за його нікнеймом у Telegram або за
+                  поштовою адресою.
                 </p>
 
                 {errorInvite && (
@@ -487,7 +512,9 @@ export default function GroupDetailsPage({
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         type="button"
-                        variant={inviteType === "telegram" ? "default" : "outline"}
+                        variant={
+                          inviteType === "telegram" ? "default" : "outline"
+                        }
                         size="sm"
                         onClick={() => {
                           setInviteType("telegram");
@@ -512,11 +539,17 @@ export default function GroupDetailsPage({
 
                   <div className="space-y-1">
                     <Label htmlFor="invite-value" className="text-xs">
-                      {inviteType === "telegram" ? "Telegram нікнейм" : "Email адреса"}
+                      {inviteType === "telegram"
+                        ? "Telegram нікнейм"
+                        : "Email адреса"}
                     </Label>
                     <Input
                       id="invite-value"
-                      placeholder={inviteType === "telegram" ? "@username" : "user@example.com"}
+                      placeholder={
+                        inviteType === "telegram"
+                          ? "@username"
+                          : "user@example.com"
+                      }
                       value={inviteValue}
                       onChange={(e) => setInviteValue(e.target.value)}
                       disabled={isInviting}

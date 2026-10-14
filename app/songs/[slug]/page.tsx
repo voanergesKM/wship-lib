@@ -1,7 +1,7 @@
 import { getQueryClient } from "@/lib/queryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { SongPage } from "./SongPage";
-import { getSongBySlug } from "@/lib/data/songs";
+import { getCachedSongBySlug } from "@/lib/data/songs";
 import type { Metadata, ResolvingMetadata } from "next";
 
 export async function generateMetadata(
@@ -9,7 +9,7 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { slug } = await params;
-  const song = await getSongBySlug(slug);
+  const song = await getCachedSongBySlug(slug);
 
   if (!song) {
     return {
@@ -49,11 +49,13 @@ export default async function Page({
   const { slug } = await params;
   const queryClient = getQueryClient();
 
+  // getCachedSongBySlug is memoized via React.cache() — this call is
+  // deduplicated with the one in generateMetadata, so only one DB round-trip
+  // happens per request.
   await queryClient.prefetchQuery({
     queryKey: ["song", slug],
     queryFn: async () => {
-      const song = await getSongBySlug(slug);
-
+      const song = await getCachedSongBySlug(slug);
       return JSON.parse(JSON.stringify(song));
     },
   });

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderPlus, ListPlus, Loader2, Plus } from "lucide-react";
+import { ListPlus, Loader2, Plus } from "lucide-react";
 
 import {
   Dialog,
@@ -39,6 +39,7 @@ export function AddToPlaylistDialog({
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
+  // selectedGroupId holds an explicit user choice; empty string = "not yet chosen"
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [newListName, setNewListName] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -51,26 +52,25 @@ export function AddToPlaylistDialog({
     enabled: open && isAuthenticated,
   });
 
-  // Set default group when groups load
-  useEffect(() => {
-    if (groups && groups.length > 0 && !selectedGroupId) {
-      setSelectedGroupId(groups[0]._id);
-    }
-  }, [groups, selectedGroupId]);
+  // Derive the effective group ID: use the explicit user selection if set,
+  // otherwise fall back to the first available group.
+  // This replaces the previous useEffect + setState pattern that caused
+  // an extra cascading render every time groups finished loading.
+  const effectiveGroupId = selectedGroupId || groups?.[0]?._id || "";
 
-  // Fetch lists for selected group
+  // Fetch lists for the effective group
   const { data: lists, isLoading: isLoadingLists } = useQuery({
-    queryKey: ["groupLists", selectedGroupId],
-    queryFn: () => groupsService.getSongLists(selectedGroupId),
-    enabled: open && isAuthenticated && !!selectedGroupId,
+    queryKey: ["groupLists", effectiveGroupId],
+    queryFn: () => groupsService.getSongLists(effectiveGroupId),
+    enabled: open && isAuthenticated && !!effectiveGroupId,
   });
 
   // Mutation to add song to existing list
   const { mutateAsync: addSong, isPending: isAdding } = useMutation({
     mutationFn: ({ listId }: { listId: string }) =>
-      groupsService.addSongToList(selectedGroupId, listId, songId),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["groupLists", selectedGroupId] });
+      groupsService.addSongToList(effectiveGroupId, listId, songId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groupLists", effectiveGroupId] });
       setSuccessMessage("Пісню успішно додано!");
       setErrorMessage(null);
       setTimeout(() => {
@@ -78,7 +78,7 @@ export function AddToPlaylistDialog({
         onOpenChange(false);
       }, 1500);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMessage(err.message || "Не вдалося додати пісню");
       setSuccessMessage(null);
     },
@@ -87,9 +87,9 @@ export function AddToPlaylistDialog({
   // Mutation to create new list and add song
   const { mutateAsync: createAndAdd, isPending: isCreating } = useMutation({
     mutationFn: (name: string) =>
-      groupsService.createSongList(selectedGroupId, name, songId),
+      groupsService.createSongList(effectiveGroupId, name, songId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groupLists", selectedGroupId] });
+      queryClient.invalidateQueries({ queryKey: ["groupLists", effectiveGroupId] });
       setSuccessMessage("Список створено та пісню додано!");
       setNewListName("");
       setErrorMessage(null);
@@ -98,7 +98,7 @@ export function AddToPlaylistDialog({
         onOpenChange(false);
       }, 1500);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMessage(err.message || "Не вдалося створити список");
       setSuccessMessage(null);
     },
@@ -106,7 +106,7 @@ export function AddToPlaylistDialog({
 
   const handleCreateList = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newListName.trim() || !selectedGroupId) return;
+    if (!newListName.trim() || !effectiveGroupId) return;
     await createAndAdd(newListName.trim());
   };
 
@@ -149,7 +149,7 @@ export function AddToPlaylistDialog({
                 </div>
               ) : groups && groups.length > 0 ? (
                 <Select
-                  value={selectedGroupId}
+                  value={effectiveGroupId}
                   onValueChange={(value) => {
                     setSelectedGroupId(value);
                     setErrorMessage(null);
@@ -173,7 +173,7 @@ export function AddToPlaylistDialog({
               )}
             </div>
 
-            {selectedGroupId && (
+            {effectiveGroupId && (
               <>
                 {/* Lists in Group */}
                 <div className="space-y-2">
@@ -186,7 +186,8 @@ export function AddToPlaylistDialog({
                     <div className="max-h-48 overflow-y-auto border rounded-md divide-y bg-muted/20">
                       {lists.map((list) => {
                         const hasSong = list.songs?.some(
-                          (s: any) => (s._id || s) === songId
+                          (s: { _id?: string } | string) =>
+                            (typeof s === "object" ? s._id : s) === songId
                         );
 
                         return (
