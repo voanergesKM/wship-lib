@@ -32,8 +32,7 @@ export function SongSheet({
     }
 
     if (block.type === "heading") {
-      const Tag =
-        block.level === 1 ? "h1" : block.level === 2 ? "h2" : "h3";
+      const Tag = block.level === 1 ? "h1" : block.level === 2 ? "h2" : "h3";
 
       return (
         <Tag
@@ -56,8 +55,7 @@ export function SongSheet({
     }
 
     if (block.type === "lyrics") {
-      const hasChords =
-        showChords && block.parts.some((p) => Boolean(p.chord));
+      const hasChords = showChords && block.parts.some((p) => Boolean(p.chord));
 
       if (!hasChords) {
         return (
@@ -132,7 +130,7 @@ export function SongSheet({
             "song-section rounded-xl border bg-card/60 transition-all duration-300",
             isGrid ? "p-4 shadow-xs" : "p-4 my-3",
             isActive &&
-              "ring-2 ring-primary border-primary bg-primary/10 shadow-lg scale-[1.01]",
+              "ring-2 ring-primary border-primary bg-primary/10 shadow-lg",
           )}
         >
           <div className="flex items-center justify-between pb-2 mb-2 border-b">
