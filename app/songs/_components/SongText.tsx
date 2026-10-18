@@ -74,8 +74,8 @@ export function SongText({
   };
 
   return (
-    <section className="space-y-4 rounded-lg border bg-card p-4 sm:p-6">
-      <div className="flex items-center justify-between gap-4 border-b pb-4 flex-wrap">
+    <section className="space-y-2 md:space-y-3 lg:space-y-4 rounded-lg border bg-card p-2 sm:p-4 md:p-6">
+      <div className="flex items-center justify-between gap-4 border-b pb-2 flex-wrap">
         <SongControls
           onToggleChords={handleToggleChords}
           onFontSizeUp={handleFontSizeUp}

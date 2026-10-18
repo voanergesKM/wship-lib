@@ -128,9 +128,9 @@ export function SongSheet({
           data-section-id={block.id}
           className={cn(
             "song-section rounded-xl border bg-card/60 transition-all duration-300",
-            isGrid ? "p-4 shadow-xs" : "p-4 my-3",
+            isGrid ? "p-2 md:p-3 lg:p-4 shadow-xs" : "p-4 my-3",
             isActive &&
-              "ring-2 ring-primary border-primary bg-primary/10 shadow-lg",
+              "ring-1 ring-primary border-primary bg-primary/10 shadow-lg",
           )}
         >
           <div className="flex items-center justify-between pb-2 mb-2 border-b">
@@ -163,7 +163,7 @@ export function SongSheet({
       <div
         className={cn(
           isGrid
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start"
+            ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 items-start"
             : "space-y-1",
         )}
       >
