@@ -5,3 +5,4 @@ export * from "./start.action";
 export * from "./search.action";
 export * from "./meta.action";
 export * from "./finishAdd.action";
+export * from "./playlists.action";

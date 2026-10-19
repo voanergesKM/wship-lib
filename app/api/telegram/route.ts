@@ -9,9 +9,16 @@ export async function POST(req: Request) {
       await handleMessage(update.message);
     }
 
-    // if (update.callback_query) {
-    //   await handleCallback(update.callback_query);
-    // }
+    if (update.callback_query) {
+      const cb = update.callback_query;
+      await handleCallback({
+        callbackQuery: cb,
+        data: cb.data || "",
+        chat: cb.message?.chat,
+        from: cb.from,
+        message: cb.message,
+      });
+    }
 
     return Response.json({ ok: true });
   } catch (err) {

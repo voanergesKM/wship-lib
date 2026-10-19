@@ -1,17 +1,23 @@
 import { MENU_ACTIONS } from "../contsants";
+import { getAppBaseUrl } from "@/services/notification.service";
 
 export function mainMenuKeyboard() {
+  const baseUrl = getAppBaseUrl();
+
   return {
     inline_keyboard: [
-      // [{ text: "🔍 Find", callback_data: MENU_ACTIONS.FIND }],
-      // [{ text: "➕ Add", callback_data: MENU_ACTIONS.ADD }],
-      // [{ text: "🔄 Reset", callback_data: MENU_ACTIONS.RESET }],
       [
         {
-          text: "📚 Open Library",
+          text: "📚 Відкрити бібліотеку",
           web_app: {
-            url: process.env.NEXT_PUBLIC_WEBAPP_URL,
+            url: baseUrl,
           },
+        },
+      ],
+      [
+        {
+          text: "📋 Списки відтворень",
+          callback_data: MENU_ACTIONS.PLAYLISTS,
         },
       ],
     ],

@@ -20,6 +20,48 @@ export async function sendPhoto(
   });
 }
 
+export async function editMessageText(
+  chatId: number,
+  messageId: number,
+  text: string,
+  options?: any,
+) {
+  try {
+    const res = await fetch(`${BASE}/editMessageText`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        text,
+        ...options,
+      }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to editMessageText:", err);
+  }
+}
+
+export async function answerCallbackQuery(
+  callbackQueryId: string,
+  options?: { text?: string; show_alert?: boolean },
+) {
+  try {
+    const res = await fetch(`${BASE}/answerCallbackQuery`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        callback_query_id: callbackQueryId,
+        ...options,
+      }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to answerCallbackQuery:", err);
+  }
+}
+
 export async function getFile(fileId: string) {
   const res = await fetch(`${BASE}/getFile?file_id=${fileId}`);
 

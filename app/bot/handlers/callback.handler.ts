@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import { sendPhoto, sendMessage } from "@/services/telegram.service";
+import { answerCallbackQuery, sendPhoto, sendMessage } from "@/services/telegram.service";
 import { getAssetById } from "@/services/asset.service";
 import { resetFlow, startAddFlow, startFindFlow } from "@/bot/actions";
 import { MENU_ACTIONS } from "../contsants";
@@ -9,6 +9,10 @@ import { callbackMatchers } from "../callbacks/matchers.callback";
 
 export async function handleCallback(ctx: CallbackContext) {
   await connectDB();
+
+  if (ctx.callbackQuery?.id) {
+    await answerCallbackQuery(ctx.callbackQuery.id);
+  }
 
   // const data = cb.data;
   // const chatId = cb.message.chat.id;
