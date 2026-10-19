@@ -82,6 +82,11 @@ export interface CreateArrangementPayload {
   items: ArrangementItem[];
 }
 
+export interface UpdateArrangementPayload {
+  name?: string;
+  items?: ArrangementItem[];
+}
+
 export interface SongParams {
   page: number;
   limit: number;
@@ -207,6 +212,20 @@ export const songsService = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  updateArrangement: (
+    slug: string,
+    arrangementId: string,
+    payload: UpdateArrangementPayload,
+  ) => {
+    return baseFetcher<SongArrangement>(
+      `/songs/${slug}/arrangements/${arrangementId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
   },
 
   deleteArrangement: (slug: string, arrangementId: string) => {

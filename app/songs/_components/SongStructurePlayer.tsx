@@ -7,6 +7,8 @@ import {
   ListMusic,
   X,
   RotateCcw,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,9 @@ interface SongStructurePlayerProps {
   activeStepIndex: number;
   onStepChange: (index: number) => void;
   onClose?: () => void;
+  canManage?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
   className?: string;
 }
 
@@ -32,6 +37,9 @@ export function SongStructurePlayer({
   activeStepIndex,
   onStepChange,
   onClose,
+  canManage,
+  onEdit,
+  onDelete,
   className,
 }: SongStructurePlayerProps) {
   // Expand items with repeats into individual playback steps
@@ -145,6 +153,30 @@ export function SongStructurePlayer({
             <RotateCcw className="size-3" />
           </Button>
 
+          {canManage && onEdit && (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              onClick={onEdit}
+              title="Редагувати структуру"
+              className="size-6 text-muted-foreground hover:text-foreground"
+            >
+              <Pencil className="size-3" />
+            </Button>
+          )}
+
+          {canManage && onDelete && (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              onClick={onDelete}
+              title="Видалити структуру"
+              className="size-6 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="size-3" />
+            </Button>
+          )}
+
           {onClose && (
             <Button
               size="icon-xs"
@@ -160,7 +192,7 @@ export function SongStructurePlayer({
       </div>
 
       {/* Steps chain */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+      <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs max-h-48 overflow-y-auto">
         {steps.map((step, idx) => {
           const isActive = idx === activeStepIndex;
           const isPassed = idx < activeStepIndex;

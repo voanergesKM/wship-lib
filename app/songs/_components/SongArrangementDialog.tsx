@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   X,
@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import {
   ArrangementItem,
   CreateArrangementPayload,
+  SongArrangement,
 } from "@/services/songs.service";
 import { extractSongSections } from "@/utils/parseSong";
 
@@ -29,6 +30,7 @@ interface SongArrangementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   document: string;
+  arrangement?: SongArrangement | null;
   onSave: (payload: CreateArrangementPayload) => Promise<void>;
   isSaving?: boolean;
 }
@@ -37,13 +39,28 @@ export function SongArrangementDialog({
   open,
   onOpenChange,
   document,
+  arrangement,
   onSave,
   isSaving = false,
 }: SongArrangementDialogProps) {
-  const [name, setName] = useState("Основна");
-  const [items, setItems] = useState<ArrangementItem[]>([]);
+  const [name, setName] = useState(arrangement?.name || "Основна");
+  const [items, setItems] = useState<ArrangementItem[]>(arrangement?.items || []);
   const [customSection, setCustomSection] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      if (arrangement) {
+        setName(arrangement.name);
+        setItems(arrangement.items || []);
+      } else {
+        setName("Основна");
+        setItems([]);
+      }
+      setCustomSection("");
+      setError(null);
+    }
+  }, [open, arrangement]);
 
   // Available sections parsed from the song
   const parsedSections = useMemo(
@@ -147,11 +164,12 @@ export function SongArrangementDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <ListMusic className="size-5 text-primary" />
-            Конструктор структури пісні
+            {arrangement ? "Редагування структури пісні" : "Конструктор структури пісні"}
           </DialogTitle>
           <DialogDescription>
-            Клікайте по бейджах секцій, щоб сформувати порядок виконання
-            пісні (повтори групуються автоматично).
+            {arrangement
+              ? "Змініть назву або послідовність блоків структури пісні."
+              : "Клікайте по бейджах секцій, щоб сформувати порядок виконання пісні (повтори групуються автоматично)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -303,7 +321,7 @@ export function SongArrangementDialog({
               Скасувати
             </Button>
             <Button type="submit" disabled={isSaving || items.length === 0}>
-              Зберегти структуру
+              {arrangement ? "Зберегти зміни" : "Зберегти структуру"}
             </Button>
           </div>
         </form>

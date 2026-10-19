@@ -23,10 +23,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { songOptions } from "@/lib/queries/songQueries";
 import {
+  CreateArrangementPayload,
   ProposalPayload,
+  SongArrangement,
   SongPayload,
   SongVisibility,
   songsService,
@@ -70,6 +79,12 @@ export function SongPage({ slug }: { slug: string }) {
   >(null);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isArrangementDialogOpen, setIsArrangementDialogOpen] = useState(false);
+  const [arrangementToEdit, setArrangementToEdit] =
+    useState<SongArrangement | null>(null);
+  const [arrangementToDelete, setArrangementToDelete] =
+    useState<SongArrangement | null>(null);
+  const [isDeleteArrangementDialogOpen, setIsDeleteArrangementDialogOpen] =
+    useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const isAdmin = user?.role === "admin";
@@ -100,6 +115,10 @@ export function SongPage({ slug }: { slug: string }) {
     arrangements,
     createArrangement,
     isCreating: isCreatingArrangement,
+    updateArrangement,
+    isUpdating: isUpdatingArrangement,
+    deleteArrangement,
+    isDeleting: isDeletingArrangement,
   } = useSongArrangements(slug, Boolean(slug));
 
   const { data: playlist } = useQuery({
@@ -311,6 +330,53 @@ export function SongPage({ slug }: { slug: string }) {
     }
   };
 
+  const canManageArrangement = (arr: SongArrangement | null) => {
+    if (!user || !arr) return false;
+    if (user.role === "admin") return true;
+    const createdById =
+      typeof arr.createdBy === "object" && arr.createdBy !== null
+        ? (arr.createdBy as { _id?: string })._id
+        : (arr.createdBy as unknown as string);
+    return Boolean(createdById && createdById.toString() === user.id);
+  };
+
+  const handleSaveArrangement = async (payload: CreateArrangementPayload) => {
+    if (arrangementToEdit) {
+      const updated = await updateArrangement({
+        arrangementId: arrangementToEdit._id,
+        payload,
+      });
+      setSelectedArrangementId(updated._id);
+      setActiveStepIndex(0);
+      setArrangementToEdit(null);
+    } else {
+      const created = await createArrangement(payload);
+      setSelectedArrangementId(created._id);
+      setIsPlayingStructure(true);
+      setActiveStepIndex(0);
+    }
+  };
+
+  const handleConfirmDeleteArrangement = async () => {
+    if (!arrangementToDelete) return;
+    try {
+      await deleteArrangement(arrangementToDelete._id);
+      if (selectedArrangementId === arrangementToDelete._id) {
+        setSelectedArrangementId(null);
+      }
+      if (currentArrangement?._id === arrangementToDelete._id) {
+        setIsPlayingStructure(false);
+        setActiveStepIndex(0);
+      }
+      setIsDeleteArrangementDialogOpen(false);
+      setArrangementToDelete(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Не вдалося видалити структуру",
+      );
+    }
+  };
+
   if (isLoading) return <PageLoader />;
 
   if (!data) return <div>Song not found</div>;
@@ -421,42 +487,103 @@ export function SongPage({ slug }: { slug: string }) {
 
           {/* Structure buttons (Arrangements) */}
           {mode === "view" && hasSections && (
-            <>
+            <div className="flex flex-wrap items-center gap-2">
               {currentArrangement ? (
-                <Button
-                  type="button"
-                  variant={isPlayingStructure ? "default" : "outline"}
-                  onClick={() => {
-                    setIsPlayingStructure((prev) => !prev);
-                    setActiveStepIndex(0);
-                  }}
-                  title={
-                    isPlayingStructure
-                      ? "Зупинити програвання структури"
-                      : "Запустити програвання по структурі зі скролом"
-                  }
-                  className="gap-1.5"
-                >
-                  {isPlayingStructure ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Play className="size-4 fill-current" />
+                <>
+                  <Button
+                    type="button"
+                    variant={isPlayingStructure ? "default" : "outline"}
+                    onClick={() => {
+                      setIsPlayingStructure((prev) => !prev);
+                      setActiveStepIndex(0);
+                    }}
+                    title={
+                      isPlayingStructure
+                        ? "Зупинити програвання структури"
+                        : "Запустити програвання по структурі зі скролом"
+                    }
+                    className="gap-1.5"
+                  >
+                    {isPlayingStructure ? (
+                      <Pause className="size-4" />
+                    ) : (
+                      <Play className="size-4 fill-current" />
+                    )}
+                    <span>Структура: {currentArrangement.name}</span>
+                  </Button>
+
+                  {arrangements.length > 1 && (
+                    <Select
+                      value={currentArrangement._id}
+                      onValueChange={(val) => {
+                        setSelectedArrangementId(val);
+                        setActiveStepIndex(0);
+                      }}
+                    >
+                      <SelectTrigger
+                        className="h-9 min-w-[130px] max-w-[200px] text-xs"
+                        title="Змінити вибрану структуру"
+                      >
+                        <SelectValue placeholder="Виберіть структуру" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {arrangements.map((arr) => (
+                          <SelectItem key={arr._id} value={arr._id}>
+                            {arr.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
-                  <span>Структура: {currentArrangement.name}</span>
-                </Button>
+
+                  {canManageArrangement(currentArrangement) && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          setArrangementToEdit(currentArrangement);
+                          setIsArrangementDialogOpen(true);
+                        }}
+                        title={`Редагувати структуру "${currentArrangement.name}"`}
+                        aria-label="Редагувати структуру"
+                      >
+                        <Edit3 className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          setArrangementToDelete(currentArrangement);
+                          setIsDeleteArrangementDialogOpen(true);
+                        }}
+                        className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                        title={`Видалити структуру "${currentArrangement.name}"`}
+                        aria-label="Видалити структуру"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : null}
 
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setIsArrangementDialogOpen(true)}
+                onClick={() => {
+                  setArrangementToEdit(null);
+                  setIsArrangementDialogOpen(true);
+                }}
                 title="Створити нову структуру пісні"
               >
                 <ListMusic className="size-4 mr-1 text-primary" />
                 {arrangements.length > 0 ? "+ Структура" : "Створити структуру"}
               </Button>
-            </>
+            </div>
           )}
 
           {/* Author/Admin controls */}
@@ -583,6 +710,15 @@ export function SongPage({ slug }: { slug: string }) {
           activeStepIndex={activeStepIndex}
           onStepChange={setActiveStepIndex}
           onClose={() => setIsPlayingStructure(false)}
+          canManage={canManageArrangement(currentArrangement)}
+          onEdit={() => {
+            setArrangementToEdit(currentArrangement);
+            setIsArrangementDialogOpen(true);
+          }}
+          onDelete={() => {
+            setArrangementToDelete(currentArrangement);
+            setIsDeleteArrangementDialogOpen(true);
+          }}
         />
       )}
 
@@ -634,16 +770,71 @@ export function SongPage({ slug }: { slug: string }) {
       {isArrangementDialogOpen && (
         <SongArrangementDialog
           open={isArrangementDialogOpen}
-          onOpenChange={setIsArrangementDialogOpen}
-          document={data.document}
-          onSave={async (payload) => {
-            const created = await createArrangement(payload);
-            setSelectedArrangementId(created._id);
-            setIsPlayingStructure(true);
-            setActiveStepIndex(0);
+          onOpenChange={(open) => {
+            setIsArrangementDialogOpen(open);
+            if (!open) setArrangementToEdit(null);
           }}
-          isSaving={isCreatingArrangement}
+          document={data.document}
+          arrangement={arrangementToEdit}
+          onSave={handleSaveArrangement}
+          isSaving={isCreatingArrangement || isUpdatingArrangement}
         />
+      )}
+
+      {isDeleteArrangementDialogOpen && arrangementToDelete && (
+        <Dialog
+          open={isDeleteArrangementDialogOpen}
+          onOpenChange={(open) => {
+            setIsDeleteArrangementDialogOpen(open);
+            if (!open) setArrangementToDelete(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="size-5" />
+                Видалити структуру
+              </DialogTitle>
+              <DialogDescription className="space-y-2 pt-2 text-left">
+                <span>
+                  Ви впевнені, що хочете видалити структуру &laquo;
+                  {arrangementToDelete.name}&raquo;?
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Цю дію неможливо буде скасувати. Структуру також буде вилучено з усіх списків пісень, де її було призначено.
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsDeleteArrangementDialogOpen(false);
+                  setArrangementToDelete(null);
+                }}
+                disabled={isDeletingArrangement}
+              >
+                Скасувати
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleConfirmDeleteArrangement}
+                disabled={isDeletingArrangement}
+              >
+                {isDeletingArrangement ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Видалення...
+                  </>
+                ) : (
+                  "Видалити"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {isProposalDialogOpen && (

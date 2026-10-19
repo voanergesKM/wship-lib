@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreateArrangementPayload,
+  UpdateArrangementPayload,
   songsService,
 } from "@/services/songs.service";
 
@@ -30,6 +31,21 @@ export function useSongArrangements(slug: string, enabled = true) {
     },
   });
 
+  const updateArrangementMutation = useMutation({
+    mutationFn: ({
+      arrangementId,
+      payload,
+    }: {
+      arrangementId: string;
+      payload: UpdateArrangementPayload;
+    }) => songsService.updateArrangement(slug, arrangementId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: songArrangementsQueryKey(slug),
+      });
+    },
+  });
+
   const deleteArrangementMutation = useMutation({
     mutationFn: (arrangementId: string) =>
       songsService.deleteArrangement(slug, arrangementId),
@@ -45,6 +61,8 @@ export function useSongArrangements(slug: string, enabled = true) {
     arrangements: query.data?.arrangements ?? [],
     createArrangement: createArrangementMutation.mutateAsync,
     isCreating: createArrangementMutation.isPending,
+    updateArrangement: updateArrangementMutation.mutateAsync,
+    isUpdating: updateArrangementMutation.isPending,
     deleteArrangement: deleteArrangementMutation.mutateAsync,
     isDeleting: deleteArrangementMutation.isPending,
   };
