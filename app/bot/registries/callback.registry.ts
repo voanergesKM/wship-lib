@@ -13,4 +13,5 @@ export const callbackRegistry = {
   [MENU_ACTIONS.RESET]: menuResetCallback,
   [MENU_ACTIONS.PLAYLISTS]: menuPlaylistsCallback,
   [MENU_ACTIONS.MAIN_MENU]: menuMainCallback,
+  menu_playlists_noop: async () => {},
 };

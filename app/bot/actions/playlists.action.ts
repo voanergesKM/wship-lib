@@ -20,9 +20,12 @@ export async function playlistsFlow(
   chatId: number,
   userId: number,
   messageId?: number,
+  page: number = 1,
 ) {
   await connectDB();
   const baseUrl = getAppBaseUrl();
+  const PAGE_SIZE = 5;
+  const currentPage = Math.max(1, page);
 
   const sendOrEdit = async (text: string, replyMarkup: any) => {
     if (messageId) {
@@ -96,13 +99,10 @@ export async function playlistsFlow(
   }
 
   const groupIds = groups.map((g) => g._id);
-  const lists = await SongList.find({ groupId: { $in: groupIds } })
-    .populate<{ groupId: { _id: any; name: string } }>("groupId", "name")
-    .populate<{ songs: { _id: any; title: string; slug: string }[] }>("songs", "title slug")
-    .sort({ updatedAt: -1 })
-    .limit(5);
 
-  if (!lists || lists.length === 0) {
+  const totalCount = await SongList.countDocuments({ groupId: { $in: groupIds } });
+
+  if (totalCount === 0) {
     await sendOrEdit(
       "ℹ️ <b>Списків відтворень не знайдено</b>\n\nУ ваших групах ще немає створених списків відтворень.",
       {
@@ -125,11 +125,24 @@ export async function playlistsFlow(
     return;
   }
 
-  let text = "📋 <b>Ваші списки відтворень:</b>\n\n";
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+  const safePage = Math.min(currentPage, totalPages);
+
+  const lists = await SongList.find({ groupId: { $in: groupIds } })
+    .populate<{ groupId: { _id: any; name: string } }>("groupId", "name")
+    .populate<{ songs: { _id: any; title: string; slug: string }[] }>("songs", "title slug")
+    .sort({ updatedAt: -1 })
+    .skip((safePage - 1) * PAGE_SIZE)
+    .limit(PAGE_SIZE);
+
+  const pageInfo = totalPages > 1 ? ` (стор. ${safePage}/${totalPages})` : "";
+  let text = `📋 <b>Ваші списки відтворень</b>${pageInfo}:\n\n`;
+
+  const startIndex = (safePage - 1) * PAGE_SIZE;
 
   lists.forEach((list, i) => {
     const groupName = list.groupId?.name ? ` <i>(${escapeHtml(list.groupId.name)})</i>` : "";
-    text += `<b>${i + 1}. ${escapeHtml(list.name)}</b>${groupName}\n`;
+    text += `<b>${startIndex + i + 1}. ${escapeHtml(list.name)}</b>${groupName}\n`;
 
     if (list.songs && list.songs.length > 0) {
       list.songs.slice(0, 7).forEach((song, sIdx) => {
@@ -160,6 +173,31 @@ export async function playlistsFlow(
       },
     ];
   });
+
+  if (totalPages > 1) {
+    const paginationRow: any[] = [];
+
+    if (safePage > 1) {
+      paginationRow.push({
+        text: "⬅️ Назад",
+        callback_data: `menu_playlists_page_${safePage - 1}`,
+      });
+    }
+
+    paginationRow.push({
+      text: `📄 ${safePage} / ${totalPages}`,
+      callback_data: "menu_playlists_noop",
+    });
+
+    if (safePage < totalPages) {
+      paginationRow.push({
+        text: "Вперед ➡️",
+        callback_data: `menu_playlists_page_${safePage + 1}`,
+      });
+    }
+
+    inline_keyboard.push(paginationRow);
+  }
 
   inline_keyboard.push([
     {

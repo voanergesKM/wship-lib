@@ -4,3 +4,4 @@ export * from "./menu-reset.callback";
 export * from "./view-asset.callback";
 export * from "./menu-playlists.callback";
 export * from "./menu-main.callback";
+export * from "./menu-playlists-page.callback";
