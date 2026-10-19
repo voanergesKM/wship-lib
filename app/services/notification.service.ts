@@ -5,13 +5,20 @@ import { User, UserDocument } from "@/models/User";
 import { sendMessage } from "./telegram.service";
 
 export function getAppBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  const url =
+    process.env.NEXT_PUBLIC_WEBAPP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : undefined) ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+
+  if (url) {
+    return url.replace(/\/$/, "");
   }
-  if (process.env.APP_URL) {
-    return process.env.APP_URL.replace(/\/$/, "");
-  }
-  return "https://wship.fun";
+
+  return "https://wship-library.vercel.app";
 }
 
 function escapeHtml(text: string): string {

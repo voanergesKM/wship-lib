@@ -6,8 +6,8 @@ import { User } from "@/models/User";
 import { sendMessage } from "@/services/telegram.service";
 
 export const startCommand: BotHandler = async (ctx) => {
-  const text = ctx.text || "";
-  const parts = text.split(" ");
+  const text = (ctx.text || "").trim();
+  const parts = text.split(/\s+/);
 
   if (parts.length > 1 && parts[1].startsWith("auth_")) {
     const code = parts[1];
