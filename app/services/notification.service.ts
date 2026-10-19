@@ -104,7 +104,7 @@ export const notificationService = {
       const text =
         `${actionTitle} до пісні «${escapeHtml(songTitle)}»!\n\n` +
         `👤 <b>Від:</b> ${escapeHtml(proposerName)}${commentText}\n\n` +
-        `🔗 <a href="${songUrl}">Переглянути та розглянути на сайті</a>`;
+        `🔗 <a href="${songUrl}">Відкрити у браузері</a>`;
 
       await Promise.allSettled(
         recipients.map((recipient) => {
@@ -115,6 +115,18 @@ export const notificationService = {
           return sendMessage(chatId, text, {
             parse_mode: "HTML",
             disable_web_page_preview: true,
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "📖 Відкрити в Telegram",
+                    web_app: {
+                      url: songUrl,
+                    },
+                  },
+                ],
+              ],
+            },
           });
         }),
       );
@@ -168,11 +180,23 @@ export const notificationService = {
 
       const text =
         `${statusEmoji} ${statusTitle}${reasonBlock}\n\n` +
-        `🔗 <a href="${songUrl}">Відкрити пісню на сайті</a>`;
+        `🔗 <a href="${songUrl}">Відкрити у браузері</a>`;
 
       await sendMessage(chatId, text, {
         parse_mode: "HTML",
         disable_web_page_preview: true,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📖 Відкрити в Telegram",
+                web_app: {
+                  url: songUrl,
+                },
+              },
+            ],
+          ],
+        },
       });
     } catch (err) {
       console.error(
