@@ -3,8 +3,7 @@ import { getQueryClient } from "./lib/queryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { SearchSong } from "./components/HomePage/SearchSong";
 import { getCachedSongsList } from "./lib/data/songs";
-
-const DEFAULT_PAGE_SIZE = 18;
+import { DEFAULT_PAGE_SIZE } from "./lib/queries/songQueries";
 
 export default async function Home({
   searchParams,

@@ -1,7 +1,13 @@
 import { songsService } from "@/services/songs.service";
 import { QueryFunctionContext, queryOptions } from "@tanstack/react-query";
 
-export const songsListOptions = ({ page = 1, limit = 10, search = "" }) =>
+export const DEFAULT_PAGE_SIZE = 9;
+
+export const songsListOptions = ({
+  page = 1,
+  limit = DEFAULT_PAGE_SIZE,
+  search = "",
+}) =>
   queryOptions({
     queryKey: ["songsList", page, limit, search],
     queryFn: async ({ signal }: QueryFunctionContext) =>

@@ -40,12 +40,28 @@ export default function AddSongPage() {
 
       return response.json();
     },
-    onSuccess: (data) => {
-      console.log("🚀 ~ AddSongPage ~ data:", data);
-      queryClient.invalidateQueries({
-        queryKey: songsListOptions({}).queryKey,
+    onSuccess: async (data) => {
+      queryClient.setQueriesData<{
+        data: any[];
+        pagination: { total: number; [key: string]: any };
+      }>({ queryKey: ["songsList"] }, (old) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: [data, ...old.data.filter((s) => s.slug !== data.slug)],
+          pagination: {
+            ...old.pagination,
+            total: (old.pagination?.total || 0) + 1,
+          },
+        };
       });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["songsList"],
+      });
+
       router.push("/");
+      router.refresh();
     },
     onError: (err) => {
       console.log("🚀 ~ AddSongPage ~ err:", err);

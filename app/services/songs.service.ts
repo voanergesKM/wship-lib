@@ -217,4 +217,13 @@ export const songsService = {
       },
     );
   },
+
+  deleteSong: (slug: string) => {
+    return baseFetcher<{ success: boolean; message: string }>(
+      `/songs/${slug}`,
+      {
+        method: "DELETE",
+      },
+    );
+  },
 };

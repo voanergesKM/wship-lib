@@ -4,6 +4,7 @@ import { Song } from "@/models/Song";
 import { normalizeYouTubeLinks } from "@/utils/youtubeLinks";
 import { connectDB } from "@/lib/db";
 import { getSongsList } from "@/lib/data/songs";
+import { revalidatePath } from "next/cache";
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,6 +50,13 @@ export async function POST(request: NextRequest) {
       youtube: normalizeYouTubeLinks(body.youtube),
       createdBy: session?.user?.id ?? null,
     });
+
+    try {
+      revalidatePath("/");
+      revalidatePath("/songs");
+    } catch (err) {
+      console.warn("revalidatePath error:", err);
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

@@ -16,6 +16,8 @@ import {
   Sparkles,
   Play,
   Pause,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -68,6 +70,9 @@ export function SongPage({ slug }: { slug: string }) {
   >(null);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isArrangementDialogOpen, setIsArrangementDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const isAdmin = user?.role === "admin";
 
   // Playback structure states
   const [selectedArrangementId, setSelectedArrangementId] = useState<
@@ -244,6 +249,49 @@ export function SongPage({ slug }: { slug: string }) {
       );
     },
   });
+
+  const { mutateAsync: deleteSongMutation, isPending: isDeletingSong } =
+    useMutation({
+      mutationFn: () => songsService.deleteSong(slug),
+      onSuccess: async () => {
+        // Immediately remove deleted song from any cached songsList queries
+        queryClient.setQueriesData<{
+          data: { slug: string }[];
+          pagination: { total: number; [key: string]: any };
+        }>({ queryKey: ["songsList"] }, (old) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: old.data.filter((s) => s.slug !== slug),
+            pagination: {
+              ...old.pagination,
+              total: Math.max(0, (old.pagination?.total || 1) - 1),
+            },
+          };
+        });
+
+        await queryClient.invalidateQueries({ queryKey: ["songsList"] });
+        queryClient.removeQueries({ queryKey: ["song", slug] });
+        await queryClient.invalidateQueries({ queryKey: ["songList"] });
+        await queryClient.invalidateQueries({ queryKey: ["groupLists"] });
+
+        router.replace("/");
+        router.refresh();
+      },
+      onError: (err) => {
+        setError(
+          err instanceof Error ? err.message : "Не вдалося видалити пісню",
+        );
+      },
+    });
+
+  const handleDeleteSong = async () => {
+    try {
+      await deleteSongMutation();
+    } catch {
+      // Error handled in onError
+    }
+  };
 
   const handleProposalSubmit = async (payload: ProposalPayload) => {
     if (myPendingProposal) {
@@ -443,6 +491,20 @@ export function SongPage({ slug }: { slug: string }) {
                 Редагувати
               </Button>
             </>
+          )}
+
+          {/* Admin delete button */}
+          {mode === "view" && isAdmin && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="text-destructive border-destructive/20 hover:bg-destructive/10"
+              title="Видалити пісню"
+            >
+              <Trash2 className="size-4 mr-1" />
+              Видалити
+            </Button>
           )}
 
           {/* Regular user or Guest controls */}
@@ -647,6 +709,52 @@ export function SongPage({ slug }: { slug: string }) {
                   setIsProposalDialogOpen(true);
                 }}
               />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {isDeleteDialogOpen && (
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="size-5" />
+                Видалити пісню
+              </DialogTitle>
+              <DialogDescription className="space-y-2 pt-2 text-left">
+                <span>
+                  Ви впевнені, що хочете видалити пісню <strong>«{data.title}»</strong>?
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Ця дія є незворотною. Пісню буде видалено з бібліотеки, а також автоматично вилучено з усіх списків відтворень разом із пов&apos;язаними структурами та історією пропозицій.
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={isDeletingSong}
+              >
+                Скасувати
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteSong}
+                disabled={isDeletingSong}
+              >
+                {isDeletingSong ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Видалення...
+                  </>
+                ) : (
+                  "Видалити"
+                )}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
