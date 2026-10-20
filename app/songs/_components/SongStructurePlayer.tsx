@@ -61,7 +61,48 @@ export function SongStructurePlayer({
     return list;
   }, [arrangement]);
 
+  // Map arrangement items to step ranges for compact badge rendering
+  const itemSteps = useMemo(() => {
+    let currentStepIndex = 0;
+    return arrangement.items.map((item, itemIdx) => {
+      const repeat = item.repeat || 1;
+      const startIndex = currentStepIndex;
+      const endIndex = currentStepIndex + repeat - 1;
+      currentStepIndex += repeat;
+      return {
+        itemIdx,
+        section: item.section,
+        repeat,
+        startIndex,
+        endIndex,
+      };
+    });
+  }, [arrangement]);
+
   const currentStep = steps[activeStepIndex] || steps[0];
+  const currentItem = useMemo(() => {
+    return (
+      itemSteps.find(
+        (it) =>
+          activeStepIndex >= it.startIndex && activeStepIndex <= it.endIndex,
+      ) || itemSteps[0]
+    );
+  }, [itemSteps, activeStepIndex]);
+
+  const handleItemClick = (item: (typeof itemSteps)[number]) => {
+    if (activeStepIndex >= item.startIndex && activeStepIndex <= item.endIndex) {
+      // If currently active and has remaining repeats, advance to next repeat
+      if (activeStepIndex < item.endIndex) {
+        onStepChange(activeStepIndex + 1);
+      } else {
+        // If on the last repeat, cycle back to the first repeat of this section
+        onStepChange(item.startIndex);
+      }
+    } else {
+      // Jump to the start of this section
+      onStepChange(item.startIndex);
+    }
+  };
 
   const handleNext = () => {
     if (activeStepIndex < steps.length - 1) {
@@ -193,17 +234,35 @@ export function SongStructurePlayer({
 
       {/* Steps chain */}
       <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs max-h-48 overflow-y-auto">
-        {steps.map((step, idx) => {
-          const isActive = idx === activeStepIndex;
-          const isPassed = idx < activeStepIndex;
+        {itemSteps.map((item) => {
+          const isActive =
+            activeStepIndex >= item.startIndex && activeStepIndex <= item.endIndex;
+          const isPassed = activeStepIndex > item.endIndex;
+          const currentRepeat = isActive
+            ? activeStepIndex - item.startIndex + 1
+            : 1;
+
+          let label = item.section;
+          if (item.repeat > 1) {
+            label = isActive
+              ? `${item.section} · ${currentRepeat}/${item.repeat}`
+              : `${item.section} ×${item.repeat}`;
+          }
 
           return (
             <button
-              key={idx}
+              key={item.itemIdx}
               type="button"
-              onClick={() => onStepChange(idx)}
+              onClick={() => handleItemClick(item)}
+              title={
+                item.repeat > 1
+                  ? isActive
+                    ? `Повтор ${currentRepeat} з ${item.repeat}. Натисніть для переходу на наступний повтор`
+                    : `${item.section} (${item.repeat} повтори)`
+                  : item.section
+              }
               className={cn(
-                "px-2.5 py-1 rounded-full border text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer",
+                "px-2.5 py-1 rounded-full border text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer select-none",
                 isActive
                   ? "bg-primary text-primary-foreground border-primary shadow-xs scale-105"
                   : isPassed
@@ -211,7 +270,7 @@ export function SongStructurePlayer({
                     : "bg-muted/20 hover:bg-muted text-foreground border-border",
               )}
             >
-              {step.label}
+              {label}
             </button>
           );
         })}
@@ -233,7 +292,17 @@ export function SongStructurePlayer({
         <div className="text-xs font-medium text-foreground text-center truncate px-2">
           {currentStep ? (
             <span className="text-primary font-bold">
-              {currentStep.label}
+              {currentItem && currentItem.repeat > 1 ? (
+                <>
+                  <span>{currentItem.section}</span>
+                  <span className="text-xs font-medium text-muted-foreground ml-1.5">
+                    (повтор {activeStepIndex - currentItem.startIndex + 1} з{" "}
+                    {currentItem.repeat})
+                  </span>
+                </>
+              ) : (
+                currentStep.sectionId
+              )}
             </span>
           ) : null}
           <span className="hidden sm:inline text-muted-foreground text-[11px] ml-2">
