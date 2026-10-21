@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ListMusic,
   X,
   RotateCcw,
@@ -12,6 +13,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { SongArrangement } from "@/services/songs.service";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +52,7 @@ export function SongStructurePlayer({
   readOnly = false,
   isLive = false,
 }: SongStructurePlayerProps) {
+  const [isBadgesOpen, setIsBadgesOpen] = useState(false);
   // Expand items with repeats into individual playback steps
   const steps: PlaybackStep[] = useMemo(() => {
     const list: PlaybackStep[] = [];
@@ -177,6 +184,125 @@ export function SongStructurePlayer({
   }, [activeStepIndex, steps.length, onStepChange, readOnly]);
 
   if (!steps.length) return null;
+
+  if (readOnly) {
+    return (
+      <Collapsible
+        open={isBadgesOpen}
+        onOpenChange={setIsBadgesOpen}
+        className={cn(
+          "sticky top-16 z-30 rounded-xl border bg-card/95 backdrop-blur-md px-3 py-2 shadow-md space-y-2 animate-in fade-in slide-in-from-top-2 duration-200",
+          className,
+        )}
+      >
+        {/* Compact follower header */}
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5 font-semibold text-foreground truncate min-w-0">
+            <ListMusic className="size-4 text-primary shrink-0" />
+            {isLive && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full shrink-0">
+                <span className="size-1.5 rounded-full bg-green-500 animate-pulse" />
+                Live
+              </span>
+            )}
+            <span className="text-muted-foreground font-normal shrink-0 hidden sm:inline">
+              Секція:
+            </span>
+            <span className="text-primary font-bold truncate">
+              {currentItem && currentItem.repeat > 1 ? (
+                <>
+                  <span>{currentItem.section}</span>
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    ({activeStepIndex - currentItem.startIndex + 1}/{currentItem.repeat})
+                  </span>
+                </>
+              ) : (
+                currentStep?.sectionId
+              )}
+            </span>
+            <span className="text-muted-foreground font-normal text-[11px] shrink-0">
+              ({activeStepIndex + 1}/{steps.length})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <CollapsibleTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] font-normal text-muted-foreground hover:text-foreground gap-1 border-muted-foreground/20"
+              >
+                <span>Структура</span>
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 transition-transform duration-200",
+                    isBadgesOpen && "rotate-180",
+                  )}
+                />
+              </Button>
+            </CollapsibleTrigger>
+
+            {onClose && (
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                onClick={onClose}
+                title="Закрити структуру"
+                className="size-7 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Expandable badges list for followers */}
+        <CollapsibleContent className="pt-2 border-t space-y-1">
+          <p className="text-[11px] text-muted-foreground font-medium">
+            Послідовність пісні:
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs max-h-36 overflow-y-auto">
+            {itemSteps.map((item) => {
+              const isActive =
+                activeStepIndex >= item.startIndex && activeStepIndex <= item.endIndex;
+              const isPassed = activeStepIndex > item.endIndex;
+              const currentRepeat = isActive
+                ? activeStepIndex - item.startIndex + 1
+                : 1;
+
+              let label = item.section;
+              if (item.repeat > 1) {
+                label = isActive
+                  ? `${item.section} · ${currentRepeat}/${item.repeat}`
+                  : `${item.section} ×${item.repeat}`;
+              }
+
+              return (
+                <span
+                  key={item.itemIdx}
+                  title={
+                    item.repeat > 1
+                      ? `${item.section} (${item.repeat} повтори)`
+                      : item.section
+                  }
+                  className={cn(
+                    "px-2.5 py-0.5 rounded-full border text-xs font-semibold shrink-0 select-none transition-all duration-200",
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs scale-105"
+                      : isPassed
+                        ? "bg-muted/40 text-muted-foreground/70 border-border line-through"
+                        : "bg-muted/20 text-muted-foreground border-border",
+                  )}
+                >
+                  {label}
+                </span>
+              );
+            })}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  }
 
   return (
     <div

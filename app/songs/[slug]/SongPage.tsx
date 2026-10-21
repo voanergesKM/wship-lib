@@ -109,8 +109,11 @@ export function SongPage({ slug }: { slug: string }) {
   const asConductorSessionId = searchParams?.get("asConductor") || null;
 
   // Follower mode
-  const { conductorState, isSessionActive: isFollowerActive } =
-    useConductorFollow(conductorSessionId);
+  const {
+    conductorState,
+    isSessionActive: isFollowerActive,
+    isEnded: isFollowerEnded,
+  } = useConductorFollow(conductorSessionId);
 
   // Conductor mode
   const {
@@ -250,16 +253,19 @@ export function SongPage({ slug }: { slug: string }) {
     return list;
   }, [currentArrangement]);
 
+  const isLiveFollower = Boolean(conductorSessionId && !isFollowerEnded);
+  const isLiveConductor = Boolean(asConductorSessionId);
+
   const effectiveActiveStepIndex =
-    conductorSessionId &&
+    isLiveFollower &&
     isFollowerActive &&
     typeof conductorState?.stepIndex === "number"
       ? conductorState.stepIndex
       : activeStepIndex;
 
   const effectiveIsPlayingStructure =
-    (Boolean(conductorSessionId) && isFollowerActive) ||
-    (Boolean(asConductorSessionId) && Boolean(currentArrangement)) ||
+    (isLiveFollower && isFollowerActive) ||
+    (isLiveConductor && Boolean(currentArrangement)) ||
     isPlayingStructure;
 
   const activeSectionId =
@@ -299,6 +305,7 @@ export function SongPage({ slug }: { slug: string }) {
   const handleEndConductorSession = async () => {
     if (confirm("Завершити живу репетицію для всієї групи?")) {
       await endConductorSession();
+      await queryClient.invalidateQueries({ queryKey: ["conductorSession"] });
       toast.info("🎼 Репетицію завершено");
       router.push(`/groups/${groupId}/lists/${listId}`);
     }
@@ -484,8 +491,8 @@ export function SongPage({ slug }: { slug: string }) {
       )}
 
       {/* Follower Live Rehearsal Active Banner */}
-      {conductorSessionId && (
-        <div className="rounded-xl border border-green-500/40 bg-green-500/10 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+      {isLiveFollower && (
+        <div className="rounded-xl border border-green-500/40 bg-green-500/10 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5">
             <Radio className="size-5 text-green-600 dark:text-green-400 shrink-0 animate-pulse" />
             <div>
@@ -516,6 +523,48 @@ export function SongPage({ slug }: { slug: string }) {
         </div>
       )}
 
+      {/* Follower Live Rehearsal Ended Banner */}
+      {conductorSessionId && isFollowerEnded && (
+        <div className="rounded-xl border border-muted-foreground/20 bg-muted/40 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5">
+            <Radio className="size-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="font-semibold text-foreground flex items-center gap-2">
+                <span>🎼 Репетицію завершено</span>
+                <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full border">
+                  Завершено
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Диригент закрив сесію. Ви можете продовжити роботу в звичайному режимі.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+            >
+              <Link href={`/songs/${slug}?list=${listId}&group=${groupId}`}>
+                Звичайний режим
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Link href={`/groups/${groupId}/lists/${listId}`}>
+                <LogOut className="size-3.5 mr-1" />
+                До списку
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {hasPlaylistNav && playlist && (
         <div className="bg-muted/30 border rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-2">
@@ -531,7 +580,7 @@ export function SongPage({ slug }: { slug: string }) {
             <span className="font-medium shrink-0">
               Пісня {currentSongIndex + 1} з {playlist.songs.length}
             </span>
-            {conductorSessionId && (
+            {isLiveFollower && (
               <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400 font-medium">
                 • Синхронізовано
               </span>
@@ -872,9 +921,9 @@ export function SongPage({ slug }: { slug: string }) {
           activeStepIndex={effectiveActiveStepIndex}
           onStepChange={handleStepChange}
           onClose={() => setIsPlayingStructure(false)}
-          canManage={!conductorSessionId && canManageArrangement(currentArrangement)}
-          readOnly={Boolean(conductorSessionId)}
-          isLive={Boolean(conductorSessionId || asConductorSessionId)}
+          canManage={!isLiveFollower && canManageArrangement(currentArrangement)}
+          readOnly={isLiveFollower}
+          isLive={isLiveFollower || isLiveConductor}
           onEdit={() => {
             setArrangementToEdit(currentArrangement);
             setIsArrangementDialogOpen(true);

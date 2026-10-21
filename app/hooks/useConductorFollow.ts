@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ConductorSessionState } from "@/types/conductor.types";
 
 export function useConductorFollow(sessionId: string | null) {
+  const queryClient = useQueryClient();
   const prevEndedAtRef = useRef<string | null>(null);
   const prevDisconnectedRef = useRef(false);
 
@@ -34,6 +35,8 @@ export function useConductorFollow(sessionId: string | null) {
       toast.info("🎼 Репетицію завершено", {
         description: "Диригент закрив сесію",
       });
+      // Invalidate general conductorSession queries across the app
+      queryClient.invalidateQueries({ queryKey: ["conductorSession"] });
     }
 
     if (data.isDisconnected && !prevDisconnectedRef.current && !data.endedAt) {
