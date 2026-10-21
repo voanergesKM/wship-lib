@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -14,8 +14,11 @@ import {
   Music,
   X,
   ListMusic,
+  Radio,
 } from "lucide-react";
 import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +31,23 @@ import {
 import { groupsService, PopulatedSongListItem } from "@/services/groups.service";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { useSongArrangements } from "@/hooks/useSongArrangements";
+import { useAuth } from "@/components/providers/AuthContext";
+import { useConductorSession } from "@/hooks/useConductorSession";
+import type { ConductorSessionState } from "@/types/conductor.types";
 import { cn } from "@/lib/utils";
 
 export default function SongListPage({
-  params,
+  params: _params,
 }: {
-  params: Promise<{ groupId: string; listId: string }>;
-}) {
+  params?: Promise<{ groupId: string; listId: string }>;
+} = {}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const routeParams = useParams<{ groupId: string; listId: string }>();
+  const groupId = routeParams?.groupId ?? "";
+  const listId = routeParams?.listId ?? "";
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { groupId, listId } = use(params);
 
   // States
   const [isEditingName, setIsEditingName] = useState(false);
@@ -44,11 +55,90 @@ export default function SongListPage({
   const [editingArrangementSong, setEditingArrangementSong] =
     useState<PopulatedSongListItem | null>(null);
 
+  // Fetch Group details (for permissions)
+  const { data: group } = useQuery({
+    queryKey: ["groupDetails", groupId],
+    queryFn: () => groupsService.getGroupDetails(groupId),
+    enabled: !!groupId,
+  });
+
+  const userGroupRole = useMemo(() => {
+    if (!group?.members || !user?.id) return null;
+    const m = group.members.find(
+      (member) =>
+        member.userId?._id === user.id ||
+        (member.userId as unknown as string) === user.id,
+    );
+    return m?.role || null;
+  }, [group, user]);
+
+  const canConduct = userGroupRole === "owner" || userGroupRole === "admin";
+
   // Fetch List details
   const { data: list, isLoading: listLoading, error: listError } = useQuery({
     queryKey: ["songList", groupId, listId],
     queryFn: () => groupsService.getSongListDetails(groupId, listId),
+    enabled: Boolean(groupId && listId),
   });
+
+  // Active conductor session for this group
+  const { data: activeSession } = useQuery<ConductorSessionState | null>({
+    queryKey: ["conductorSession", "group", groupId],
+    queryFn: async () => {
+      const res = await fetch(`/api/conductor/sessions?groupId=${groupId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: Boolean(groupId),
+    refetchInterval: 4000,
+  });
+
+  const { start: startSession, isLoading: isStartingSession } =
+    useConductorSession({
+      groupId,
+    });
+
+  const songsWithoutArrangement = useMemo(() => {
+    if (!list?.songs) return [];
+    return list.songs.filter((song) => {
+      return !list.songArrangements?.some(
+        (sa) =>
+          Boolean(sa.arrangement) &&
+          (typeof sa.song === "object" ? sa.song._id : sa.song) === song._id,
+      );
+    });
+  }, [list]);
+
+  const canStartLive =
+    canConduct &&
+    songsWithoutArrangement.length === 0 &&
+    (list?.songs?.length || 0) > 0;
+
+  const handleStartLiveSession = async () => {
+    try {
+      const result = await startSession(listId);
+      if (result) {
+        router.push(
+          `/songs/${result.currentSongSlug}?list=${listId}&group=${groupId}&asConductor=${result.sessionId}`,
+        );
+      }
+    } catch (err: any) {
+      toast.error("Помилка запуску живого списку", {
+        description: err.message,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (
+      searchParams?.get("start_conductor") === "1" &&
+      canStartLive &&
+      !activeSession &&
+      !isStartingSession
+    ) {
+      handleStartLiveSession();
+    }
+  }, [searchParams, canStartLive, activeSession, isStartingSession]);
 
   // Mutations
   const { mutateAsync: updateList, isPending: isUpdating } = useMutation({
@@ -206,20 +296,120 @@ export default function SongListPage({
           </p>
         </div>
 
-        {songs.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {activeSession && !activeSession.endedAt && !activeSession.isDisconnected ? (
+            activeSession.conductorUserId === user?.id ? (
+              <Button
+                asChild
+                className="w-full sm:w-auto bg-primary text-primary-foreground gap-1.5 shadow-md"
+              >
+                <Link
+                  href={`/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&asConductor=${activeSession._id}`}
+                >
+                  <span>🎼</span>
+                  Продовжити диригування
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                variant="outline"
+                className="w-full sm:w-auto gap-1.5 border-green-500/40 text-green-600 dark:text-green-400 hover:bg-green-500/10 shadow-xs"
+              >
+                <Link
+                  href={`/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&conductor=${activeSession._id}`}
+                >
+                  <span className="size-2 rounded-full bg-green-500 animate-pulse" />
+                  👥 Приєднатись до репетиції
+                </Link>
+              </Button>
+            )
+          ) : (
+            canConduct && (
+              <Button
+                onClick={handleStartLiveSession}
+                disabled={!canStartLive || isStartingSession}
+                variant="outline"
+                className="w-full sm:w-auto gap-1.5 border-primary/40 text-primary hover:bg-primary/10 shadow-xs"
+              >
+                {isStartingSession ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <span>🎼</span>
+                )}
+                Живий список
+              </Button>
+            )
+          )}
+
+          {songs.length > 0 && (
+            <Button
+              asChild
+              className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/95 shadow-md transition-all duration-200"
+            >
+              <Link
+                href={`/songs/${songs[0].slug}?list=${listId}&group=${groupId}`}
+              >
+                <Play className="h-4 w-4 mr-2 fill-current" />
+                Запустити список
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Live Session Active Banner */}
+      {activeSession && !activeSession.endedAt && !activeSession.isDisconnected && (
+        <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2.5">
+            <Radio className="size-5 text-green-600 dark:text-green-400 shrink-0 animate-pulse" />
+            <div>
+              <p className="font-semibold text-green-950 dark:text-green-200">
+                Триває жива репетиція
+              </p>
+              <p className="text-xs text-green-800/80 dark:text-green-300/80">
+                {activeSession.conductorUserId === user?.id
+                  ? "Ви запустили диригування цим списком пісень."
+                  : "Диригент проводить синхронізовану репетицію списку."}
+              </p>
+            </div>
+          </div>
           <Button
             asChild
-            className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/95 shadow-md transition-all duration-200"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white shrink-0"
           >
             <Link
-              href={`/songs/${songs[0].slug}?list=${listId}&group=${groupId}`}
+              href={
+                activeSession.conductorUserId === user?.id
+                  ? `/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&asConductor=${activeSession._id}`
+                  : `/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&conductor=${activeSession._id}`
+              }
             >
-              <Play className="h-4 w-4 mr-2 fill-current" />
-              Запустити список
+              {activeSession.conductorUserId === user?.id
+                ? "Перейти до диригування"
+                : "Приєднатися"}
             </Link>
           </Button>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Validation banner: songs without arrangement */}
+      {canConduct && songsWithoutArrangement.length > 0 && (
+        <div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-4 text-sm space-y-2">
+          <p className="font-semibold text-amber-900 dark:text-amber-200">
+            ⚠️ Не всі пісні мають структуру для живого списку:
+          </p>
+          <ul className="list-disc list-inside text-xs text-amber-800 dark:text-amber-300 space-y-0.5">
+            {songsWithoutArrangement.map((s) => (
+              <li key={s._id}>{s.title}</li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">
+            Призначте структуру кожній пісні списку, щоб мати змогу запустити «Живий список».
+          </p>
+        </div>
+      )}
 
       {/* Song List Content */}
       <div className="space-y-4">

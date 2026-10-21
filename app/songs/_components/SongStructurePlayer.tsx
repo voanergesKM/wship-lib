@@ -30,6 +30,8 @@ interface SongStructurePlayerProps {
   onEdit?: () => void;
   onDelete?: () => void;
   className?: string;
+  readOnly?: boolean;
+  isLive?: boolean;
 }
 
 export function SongStructurePlayer({
@@ -41,6 +43,8 @@ export function SongStructurePlayer({
   onEdit,
   onDelete,
   className,
+  readOnly = false,
+  isLive = false,
 }: SongStructurePlayerProps) {
   // Expand items with repeats into individual playback steps
   const steps: PlaybackStep[] = useMemo(() => {
@@ -64,19 +68,22 @@ export function SongStructurePlayer({
   // Map arrangement items to step ranges for compact badge rendering
   const itemSteps = useMemo(() => {
     let currentStepIndex = 0;
-    return arrangement.items.map((item, itemIdx) => {
+    const list = [];
+    for (let itemIdx = 0; itemIdx < arrangement.items.length; itemIdx++) {
+      const item = arrangement.items[itemIdx];
       const repeat = item.repeat || 1;
       const startIndex = currentStepIndex;
       const endIndex = currentStepIndex + repeat - 1;
       currentStepIndex += repeat;
-      return {
+      list.push({
         itemIdx,
         section: item.section,
         repeat,
         startIndex,
         endIndex,
-      };
-    });
+      });
+    }
+    return list;
   }, [arrangement]);
 
   const currentStep = steps[activeStepIndex] || steps[0];
@@ -90,6 +97,7 @@ export function SongStructurePlayer({
   }, [itemSteps, activeStepIndex]);
 
   const handleItemClick = (item: (typeof itemSteps)[number]) => {
+    if (readOnly) return;
     if (activeStepIndex >= item.startIndex && activeStepIndex <= item.endIndex) {
       // If currently active and has remaining repeats, advance to next repeat
       if (activeStepIndex < item.endIndex) {
@@ -105,18 +113,21 @@ export function SongStructurePlayer({
   };
 
   const handleNext = () => {
+    if (readOnly) return;
     if (activeStepIndex < steps.length - 1) {
       onStepChange(activeStepIndex + 1);
     }
   };
 
   const handlePrev = () => {
+    if (readOnly) return;
     if (activeStepIndex > 0) {
       onStepChange(activeStepIndex - 1);
     }
   };
 
   const handleReset = () => {
+    if (readOnly) return;
     onStepChange(0);
   };
 
@@ -134,6 +145,8 @@ export function SongStructurePlayer({
 
   // Keyboard navigation (Space, ArrowRight, ArrowLeft)
   useEffect(() => {
+    if (readOnly) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is currently typing in an input, textarea, or contentEditable
       const target = e.target as HTMLElement | null;
@@ -161,7 +174,7 @@ export function SongStructurePlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeStepIndex, steps.length, onStepChange]);
+  }, [activeStepIndex, steps.length, onStepChange, readOnly]);
 
   if (!steps.length) return null;
 
@@ -181,20 +194,28 @@ export function SongStructurePlayer({
           <span className="text-muted-foreground font-normal ml-1 shrink-0">
             ({activeStepIndex + 1} з {steps.length})
           </span>
+          {isLive && (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full shrink-0">
+              <span className="size-1.5 rounded-full bg-green-500 animate-pulse" />
+              Live
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            onClick={handleReset}
-            title="Почати спочатку"
-            className="size-6 text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="size-3" />
-          </Button>
+          {!readOnly && (
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              onClick={handleReset}
+              title="Почати спочатку"
+              className="size-6 text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="size-3" />
+            </Button>
+          )}
 
-          {canManage && onEdit && (
+          {!readOnly && canManage && onEdit && (
             <Button
               size="icon-xs"
               variant="ghost"
@@ -206,7 +227,7 @@ export function SongStructurePlayer({
             </Button>
           )}
 
-          {canManage && onDelete && (
+          {!readOnly && canManage && onDelete && (
             <Button
               size="icon-xs"
               variant="ghost"
@@ -253,6 +274,7 @@ export function SongStructurePlayer({
             <button
               key={item.itemIdx}
               type="button"
+              disabled={readOnly}
               onClick={() => handleItemClick(item)}
               title={
                 item.repeat > 1
@@ -262,7 +284,8 @@ export function SongStructurePlayer({
                   : item.section
               }
               className={cn(
-                "px-2.5 py-1 rounded-full border text-xs font-semibold shrink-0 transition-all duration-200 cursor-pointer select-none",
+                "px-2.5 py-1 rounded-full border text-xs font-semibold shrink-0 transition-all duration-200 select-none",
+                readOnly ? "cursor-default" : "cursor-pointer",
                 isActive
                   ? "bg-primary text-primary-foreground border-primary shadow-xs scale-105"
                   : isPassed
@@ -282,7 +305,7 @@ export function SongStructurePlayer({
           size="sm"
           variant="outline"
           className="h-8 text-xs gap-1"
-          disabled={activeStepIndex === 0}
+          disabled={readOnly || activeStepIndex === 0}
           onClick={handlePrev}
         >
           <ChevronLeft className="size-3.5" />
@@ -305,15 +328,17 @@ export function SongStructurePlayer({
               )}
             </span>
           ) : null}
-          <span className="hidden sm:inline text-muted-foreground text-[11px] ml-2">
-            (Пробіл або → для переходу)
-          </span>
+          {!readOnly && (
+            <span className="hidden sm:inline text-muted-foreground text-[11px] ml-2">
+              (Пробіл або → для переходу)
+            </span>
+          )}
         </div>
 
         <Button
           size="sm"
           className="h-8 text-xs gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
-          disabled={activeStepIndex === steps.length - 1}
+          disabled={readOnly || activeStepIndex === steps.length - 1}
           onClick={handleNext}
         >
           Далі

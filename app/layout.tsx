@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import Providers from "@/components/providers";
 import { Header } from "./components/layout/Header";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -82,6 +83,7 @@ export default function RootLayout({
         </Providers>
 
         <Analytics />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

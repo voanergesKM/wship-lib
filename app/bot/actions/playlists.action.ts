@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { Group } from "@/models/Group";
 import { SongList } from "@/models/SongList";
+import { ConductorSession } from "@/models/ConductorSession";
 import "@/models/Song"; // Ensure Song schema is loaded for Mongoose populate
 import { getAppBaseUrl } from "@/services/notification.service";
 import { editMessageText, sendMessage } from "@/services/telegram.service";
@@ -73,7 +74,9 @@ export async function playlistsFlow(
     return;
   }
 
-  const groups = await Group.find({ "members.userId": dbUser._id }).select("_id name");
+  const groups = await Group.find({ "members.userId": dbUser._id }).select(
+    "_id name members",
+  );
 
   if (!groups || groups.length === 0) {
     await sendOrEdit(
@@ -98,7 +101,28 @@ export async function playlistsFlow(
     return;
   }
 
+  const userRoleByGroupId = new Map<string, string>();
+  for (const g of groups) {
+    const m = g.members?.find(
+      (member: any) =>
+        (member.userId?._id || member.userId)?.toString() ===
+        dbUser._id.toString(),
+    );
+    if (m?.role) {
+      userRoleByGroupId.set(g._id.toString(), m.role);
+    }
+  }
+
   const groupIds = groups.map((g) => g._id);
+
+  const activeSessions = await ConductorSession.find({
+    groupId: { $in: groupIds },
+    endedAt: null,
+    lastHeartbeatAt: { $gt: new Date(Date.now() - 20_000) },
+  });
+  const activeSessionByGroupId = new Map<string, any>(
+    activeSessions.map((s) => [s.groupId.toString(), s]),
+  );
 
   const totalCount = await SongList.countDocuments({ groupId: { $in: groupIds } });
 
@@ -161,10 +185,30 @@ export async function playlistsFlow(
   text += "<i>Натисніть кнопку нижче, щоб відкрити потрібний список у Telegram:</i>";
 
   const inline_keyboard: any[][] = lists.map((list) => {
-    const gId = list.groupId?._id ? list.groupId._id.toString() : list.groupId?.toString();
-    const listTitle = list.name.length > 25 ? list.name.slice(0, 22) + "..." : list.name;
+    const gId = list.groupId?._id
+      ? list.groupId._id.toString()
+      : list.groupId?.toString() || "";
+    const listTitle =
+      list.name.length > 22 ? list.name.slice(0, 20) + "..." : list.name;
 
-    return [
+    const role = userRoleByGroupId.get(gId);
+    const canConduct = role === "owner" || role === "admin";
+
+    const allHaveArrangements =
+      Boolean(list.songs && list.songs.length > 0) &&
+      list.songs.every((s: any) => {
+        const songId = s._id ? s._id.toString() : s.toString();
+        return list.songArrangements?.some(
+          (sa: any) =>
+            Boolean(sa.arrangement) &&
+            (sa.song?._id ? sa.song._id.toString() : sa.song?.toString()) ===
+              songId,
+        );
+      });
+
+    const activeSession = activeSessionByGroupId.get(gId);
+
+    const listButtons: any[] = [
       {
         text: `▶️ ${listTitle}`,
         web_app: {
@@ -172,6 +216,27 @@ export async function playlistsFlow(
         },
       },
     ];
+
+    if (
+      activeSession &&
+      activeSession.listId?.toString() === list._id.toString()
+    ) {
+      listButtons.push({
+        text: "👥 Репетиція",
+        web_app: {
+          url: `${baseUrl}/groups/${gId}/lists/${list._id}?conductor=${activeSession._id}`,
+        },
+      });
+    } else if (canConduct && allHaveArrangements && !activeSession) {
+      listButtons.push({
+        text: "🎼 Диригувати",
+        web_app: {
+          url: `${baseUrl}/groups/${gId}/lists/${list._id}?start_conductor=1`,
+        },
+      });
+    }
+
+    return listButtons;
   });
 
   if (totalPages > 1) {

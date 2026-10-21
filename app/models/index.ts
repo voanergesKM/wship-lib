@@ -8,6 +8,7 @@ import "./SongList";
 import "./UserState";
 import "./Arrangement";
 import "./SongProposal";
+import "./ConductorSession";
 
 export { User } from "./User";
 export { AuthSession } from "./AuthSession";
@@ -17,3 +18,4 @@ export { SongList } from "./SongList";
 export { UserState } from "./UserState";
 export { Arrangement } from "./Arrangement";
 export { SongProposal } from "./SongProposal";
+export { ConductorSession } from "./ConductorSession";

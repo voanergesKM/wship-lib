@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { SongProposal } from "@/models/SongProposal";
 import { Song } from "@/models/Song";
+import { Group } from "@/models/Group";
 import { User, UserDocument } from "@/models/User";
 import { sendMessage } from "./telegram.service";
 
@@ -201,6 +202,69 @@ export const notificationService = {
     } catch (err) {
       console.error(
         "❌ Failed to send proposal review Telegram notification:",
+        err,
+      );
+    }
+  },
+
+  notifyConductorSessionStarted: async ({
+    groupId,
+    listId,
+    listName,
+    sessionId,
+    conductorName,
+  }: {
+    groupId: string;
+    listId: string;
+    listName: string;
+    sessionId: string;
+    conductorName: string;
+  }) => {
+    try {
+      await connectDB();
+      const baseUrl = getAppBaseUrl();
+
+      const group = await Group.findById(groupId).populate("members.userId");
+      if (!group) return;
+
+      const memberUserIds =
+        group.members
+          ?.map((m: any) => m.userId?._id || m.userId)
+          .filter(Boolean) || [];
+
+      const recipients = await User.find({
+        _id: { $in: memberUserIds },
+        telegramId: { $exists: true, $ne: null },
+      });
+
+      const joinUrl = `${baseUrl}/groups/${groupId}/lists/${listId}?conductor=${sessionId}`;
+      const text =
+        `🎼 <b>Розпочато живу репетицію!</b>\n\n` +
+        `📋 Список: <b>${escapeHtml(listName)}</b>\n` +
+        `🎤 Диригент: <b>${escapeHtml(conductorName)}</b>\n\n` +
+        `Натисніть кнопку нижче, щоб приєднатись.`;
+
+      await Promise.allSettled(
+        recipients.map((r) =>
+          sendMessage(Number(r.telegramId), text, {
+            parse_mode: "HTML",
+            disable_web_page_preview: true,
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "👥 Приєднатись до репетиції",
+                    web_app: { url: joinUrl },
+                  },
+                ],
+              ],
+            },
+          }),
+        ),
+      );
+    } catch (err) {
+      console.error(
+        "❌ Failed to send conductor session started notification:",
         err,
       );
     }

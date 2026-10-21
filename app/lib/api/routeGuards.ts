@@ -34,6 +34,7 @@ type MemberUserRef = {
 
 type GroupMember = {
   userId?: MemberUserRef | null;
+  role?: string;
 };
 
 export const requireAuth: Middleware<BaseContext, AuthContext> = async () => {
@@ -73,6 +74,22 @@ export const requireGroupAccess: Middleware<
   return {
     group,
   };
+};
+
+export const requireConductorRole: Middleware<
+  BaseContext<GroupRouteParams> & AuthContext & GroupAccessContext,
+  Record<string, never>
+> = async (_req, { session, group }) => {
+  const member = group.members.find((m: GroupMember) =>
+    isSameUser(m.userId, session.user.id),
+  );
+  if (!member || !["owner", "admin"].includes(member.role as string)) {
+    return NextResponse.json(
+      { message: "Лише адміністратори групи можуть диригувати" },
+      { status: 403 },
+    );
+  }
+  return {};
 };
 
 function isSameUser(memberUserId: MemberUserRef | null | undefined, userId: string) {
