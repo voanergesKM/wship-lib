@@ -90,6 +90,23 @@ export async function POST(request: NextRequest) {
       const isSameConductor =
         existingSession.conductorUserId.toString() === auth.user.id;
 
+      // If the same conductor is calling create for the same list and it is still fresh,
+      // reuse the active session instead of recreating it (prevents duplicate sessions & duplicate notifications)
+      if (
+        isSameConductor &&
+        existingSession.listId.toString() === listId &&
+        !isStale
+      ) {
+        return NextResponse.json(
+          {
+            sessionId: existingSession._id.toString(),
+            currentSongSlug: existingSession.currentSongSlug,
+            stepIndex: existingSession.stepIndex,
+          },
+          { status: 200 },
+        );
+      }
+
       if (isStale || isSameConductor) {
         existingSession.endedAt = new Date();
         await existingSession.save();
@@ -126,6 +143,7 @@ export async function POST(request: NextRequest) {
         sessionId: newSession._id.toString(),
         conductorName:
           auth.user.firstName || auth.user.username || "Диригент",
+        conductorUserId: auth.user.id,
       })
       .catch((err) => {
         console.error("Failed to notify conductor session started:", err);

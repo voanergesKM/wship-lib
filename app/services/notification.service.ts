@@ -213,12 +213,14 @@ export const notificationService = {
     listName,
     sessionId,
     conductorName,
+    conductorUserId,
   }: {
     groupId: string;
     listId: string;
     listName: string;
     sessionId: string;
     conductorName: string;
+    conductorUserId?: string;
   }) => {
     try {
       await connectDB();
@@ -229,13 +231,22 @@ export const notificationService = {
 
       const memberUserIds =
         group.members
-          ?.map((m: any) => m.userId?._id || m.userId)
-          .filter(Boolean) || [];
+          ?.map((m: any) => (m.userId?._id || m.userId)?.toString())
+          .filter(
+            (id: string) =>
+              Boolean(id) &&
+              (!conductorUserId || id !== conductorUserId.toString()),
+          ) || [];
+
+      const uniqueUserIds = Array.from(new Set(memberUserIds));
+      if (uniqueUserIds.length === 0) return;
 
       const recipients = await User.find({
-        _id: { $in: memberUserIds },
+        _id: { $in: uniqueUserIds },
         telegramId: { $exists: true, $ne: null },
       });
+
+      if (!recipients || recipients.length === 0) return;
 
       const joinUrl = `${baseUrl}/groups/${groupId}/lists/${listId}?conductor=${sessionId}`;
       const text =
