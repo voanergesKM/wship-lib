@@ -14,6 +14,13 @@ import {
 type PreferencesResponse = { preferences: UserPreferences };
 type PreferencesPatch = Partial<SongDisplayPreferences>;
 
+function getSongDisplayPreferences(user: AuthUser | null) {
+  return {
+    ...DEFAULT_SONG_DISPLAY_PREFERENCES,
+    ...user?.preferences?.songDisplay,
+  };
+}
+
 async function updatePreferences(patch: PreferencesPatch) {
   const response = await fetch("/api/users/preferences", {
     method: "PATCH",
@@ -34,9 +41,14 @@ async function updatePreferences(patch: PreferencesPatch) {
 export function useSongDisplayPreferences() {
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
-  const [guestPreferences, setGuestPreferences] = useState<SongDisplayPreferences>(
-    DEFAULT_SONG_DISPLAY_PREFERENCES,
-  );
+  const [localPreferences, setLocalPreferences] =
+    useState<Partial<SongDisplayPreferences>>({});
+  const songDisplayPreferences = {
+    ...(isAuthenticated
+      ? getSongDisplayPreferences(user)
+      : DEFAULT_SONG_DISPLAY_PREFERENCES),
+    ...localPreferences,
+  };
 
   const mutation = useMutation({
     scope: { id: "user-song-display-preferences" },
@@ -52,9 +64,9 @@ export function useSongDisplayPreferences() {
           ? {
               ...currentUser,
               preferences: {
-                ...currentUser.preferences,
+                version: currentUser.preferences?.version ?? 1,
                 songDisplay: {
-                  ...currentUser.preferences.songDisplay,
+                  ...getSongDisplayPreferences(currentUser),
                   ...patch,
                 },
               },
@@ -66,6 +78,7 @@ export function useSongDisplayPreferences() {
     },
     onError: (error, _patch, context) => {
       queryClient.setQueryData(["authMe"], context?.previousUser);
+      setLocalPreferences({});
       toast.error(
         error instanceof Error
           ? error.message
@@ -76,16 +89,14 @@ export function useSongDisplayPreferences() {
       queryClient.setQueryData<AuthUser | null>(["authMe"], (currentUser) =>
         currentUser ? { ...currentUser, preferences } : currentUser,
       );
+      setLocalPreferences({});
     },
   });
 
-  const songDisplayPreferences = isAuthenticated
-    ? user?.preferences.songDisplay ?? DEFAULT_SONG_DISPLAY_PREFERENCES
-    : guestPreferences;
-
   const updateSongDisplayPreferences = (patch: PreferencesPatch) => {
+    setLocalPreferences((current) => ({ ...current, ...patch }));
+
     if (!isAuthenticated) {
-      setGuestPreferences((current) => ({ ...current, ...patch }));
       return;
     }
 

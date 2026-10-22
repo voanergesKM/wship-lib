@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
         $setOnInsert: { version: 1 },
       },
       { new: true, upsert: true, setDefaultsOnInsert: true },
-    );
+    ).lean();
 
     return NextResponse.json({ preferences: serializePreferences(preference) });
   } catch (error) {

@@ -19,7 +19,7 @@ export interface AuthUser {
   role: string;
   photoUrl: string | null;
   email?: string | null;
-  preferences: UserPreferences;
+  preferences?: UserPreferences;
 }
 
 interface AuthContextType {
