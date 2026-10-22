@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Edit3,
   Eye,
   X,
-  ChevronLeft,
-  ChevronRight,
   ListMusic,
   ListPlus,
   GitPullRequest,
@@ -18,11 +16,8 @@ import {
   Pause,
   Trash2,
   Loader2,
-  Radio,
-  LogOut,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -39,9 +34,7 @@ import {
   CreateArrangementPayload,
   ProposalPayload,
   SongArrangement,
-  SongPayload,
   SongVisibility,
-  songsService,
 } from "@/services/songs.service";
 import {
   normalizeYouTubeLinks,
@@ -54,6 +47,7 @@ import { AddToPlaylistDialog } from "@/components/shared/AddToPlaylistDialog";
 import { groupsService } from "@/services/groups.service";
 import { useSongProposals } from "@/hooks/useSongProposals";
 import { useSongArrangements } from "@/hooks/useSongArrangements";
+import { useSongMutations } from "@/hooks/useSongMutations";
 import { SongProposalDialog } from "../_components/SongProposalDialog";
 import { SongProposalReviewDialog } from "../_components/SongProposalReviewDialog";
 import { SongArrangementDialog } from "../_components/SongArrangementDialog";
@@ -68,6 +62,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TelegramDesktopLogin } from "@/components/ui/telegram-desktop-login";
+import { SongLiveRehearsalBanners } from "../_components/SongLiveRehearsalBanners";
+import { SongPlaylistNavigation } from "../_components/SongPlaylistNavigation";
 
 export function SongPage({ slug }: { slug: string }) {
   const router = useRouter();
@@ -318,73 +314,27 @@ export function SongPage({ slug }: { slug: string }) {
   const setIsReviewDialogOpen = (open: boolean) =>
     setIsReviewOpenOverride(open);
 
-  const { mutateAsync: updateSong } = useMutation({
-    mutationFn: (payload: SongPayload) => songsService.update(slug, payload),
-    onSuccess: async (updatedSong) => {
-      queryClient.setQueryData(songOptions({ slug }).queryKey, updatedSong);
-
-      if (updatedSong.slug !== slug) {
-        queryClient.setQueryData(
-          songOptions({ slug: updatedSong.slug }).queryKey,
-          updatedSong,
-        );
-        router.replace(`/songs/${updatedSong.slug}`);
+  const { updateSong, deleteSong, isDeletingSong } = useSongMutations({
+    slug,
+    onUpdateSuccess: (updatedSlug) => {
+      if (updatedSlug !== slug) {
+        router.replace(`/songs/${updatedSlug}`);
       }
-
-      await queryClient.invalidateQueries({
-        queryKey: songOptions({ slug: updatedSong.slug }).queryKey,
-      });
-
       setMode("view");
       setError(null);
     },
-    onError: (err) => {
-      setError(
-        err instanceof Error ? err.message : "Не вдалося зберегти пісню",
-      );
+    onDeleteSuccess: () => {
+      router.replace("/");
+      router.refresh();
     },
+    onError: setError,
   });
-
-  const { mutateAsync: deleteSongMutation, isPending: isDeletingSong } =
-    useMutation({
-      mutationFn: () => songsService.deleteSong(slug),
-      onSuccess: async () => {
-        // Immediately remove deleted song from any cached songsList queries
-        queryClient.setQueriesData<{
-          data: { slug: string }[];
-          pagination: { total: number; [key: string]: any };
-        }>({ queryKey: ["songsList"] }, (old) => {
-          if (!old?.data) return old;
-          return {
-            ...old,
-            data: old.data.filter((s) => s.slug !== slug),
-            pagination: {
-              ...old.pagination,
-              total: Math.max(0, (old.pagination?.total || 1) - 1),
-            },
-          };
-        });
-
-        await queryClient.invalidateQueries({ queryKey: ["songsList"] });
-        queryClient.removeQueries({ queryKey: ["song", slug] });
-        await queryClient.invalidateQueries({ queryKey: ["songList"] });
-        await queryClient.invalidateQueries({ queryKey: ["groupLists"] });
-
-        router.replace("/");
-        router.refresh();
-      },
-      onError: (err) => {
-        setError(
-          err instanceof Error ? err.message : "Не вдалося видалити пісню",
-        );
-      },
-    });
 
   const handleDeleteSong = async () => {
     try {
-      await deleteSongMutation();
+      await deleteSong();
     } catch {
-      // Error handled in onError
+      // Error is displayed by the mutation hook.
     }
   };
 
@@ -462,203 +412,30 @@ export function SongPage({ slug }: { slug: string }) {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
-      {/* Conductor Live Rehearsal Active Banner */}
-      {asConductorSessionId && (
-        <div className="rounded-xl border border-primary/40 bg-primary/10 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
-          <div className="flex items-center gap-2.5">
-            <Radio className="size-5 text-primary shrink-0 animate-pulse" />
-            <div>
-              <p className="font-semibold text-foreground flex items-center gap-2">
-                <span>🎼 Ви диригуєте живою репетицією</span>
-                <span className="text-[11px] font-medium bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                  Live
-                </span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Зміна секцій та пісень автоматично транслюється учасникам групи.
-              </p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={handleEndConductorSession}
-            className="shrink-0"
-          >
-            Завершити репетицію
-          </Button>
-        </div>
-      )}
+      <SongLiveRehearsalBanners
+        asConductorSessionId={asConductorSessionId}
+        conductorSessionId={conductorSessionId}
+        conductorDisconnected={conductorState?.isDisconnected}
+        groupId={groupId}
+        isFollowerEnded={isFollowerEnded}
+        isLiveFollower={isLiveFollower}
+        listId={listId}
+        slug={slug}
+        onEndConductorSession={handleEndConductorSession}
+      />
 
-      {/* Follower Live Rehearsal Active Banner */}
-      {isLiveFollower && (
-        <div className="rounded-xl border border-green-500/40 bg-green-500/10 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in duration-200">
-          <div className="flex items-center gap-2.5">
-            <Radio className="size-5 text-green-600 dark:text-green-400 shrink-0 animate-pulse" />
-            <div>
-              <p className="font-semibold text-green-950 dark:text-green-200 flex items-center gap-2">
-                <span>👥 Режим репетиції (слідування за диригентом)</span>
-                <span className="text-[11px] font-medium bg-green-600 text-white px-2 py-0.5 rounded-full">
-                  Live
-                </span>
-              </p>
-              <p className="text-xs text-green-800/80 dark:text-green-300/80 mt-0.5">
-                {conductorState?.isDisconnected
-                  ? "⚠️ Диригент тимчасово від'єднався. Очікуємо відновлення..."
-                  : "Секції та пісні перемикаються диригентом автоматично."}
-              </p>
-            </div>
-          </div>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="shrink-0 border-green-600/30 text-green-700 dark:text-green-300 hover:bg-green-500/20"
-          >
-            <Link href={`/groups/${groupId}/lists/${listId}`}>
-              <LogOut className="size-3.5 mr-1" />
-              Вийти
-            </Link>
-          </Button>
-        </div>
-      )}
-
-      {/* Follower Live Rehearsal Ended Banner */}
-      {conductorSessionId && isFollowerEnded && (
-        <div className="rounded-xl border border-muted-foreground/20 bg-muted/40 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm animate-in fade-in duration-200">
-          <div className="flex items-center gap-2.5">
-            <Radio className="size-5 text-muted-foreground shrink-0" />
-            <div>
-              <p className="font-semibold text-foreground flex items-center gap-2">
-                <span>🎼 Репетицію завершено</span>
-                <span className="text-[11px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full border">
-                  Завершено
-                </span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Диригент закрив сесію. Ви можете продовжити роботу в звичайному режимі.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-            >
-              <Link href={`/songs/${slug}?list=${listId}&group=${groupId}`}>
-                Звичайний режим
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Link href={`/groups/${groupId}/lists/${listId}`}>
-                <LogOut className="size-3.5 mr-1" />
-                До списку
-              </Link>
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {hasPlaylistNav && playlist && (
-        <div className="bg-muted/30 border rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <ListMusic className="h-4 w-4 text-primary shrink-0" />
-            <span className="text-muted-foreground">Список:</span>
-            <Link
-              href={`/groups/${groupId}/lists/${listId}`}
-              className="font-bold hover:underline truncate max-w-[200px] sm:max-w-md"
-            >
-              {playlist.name}
-            </Link>
-            <span className="text-muted-foreground hidden sm:inline">|</span>
-            <span className="font-medium shrink-0">
-              Пісня {currentSongIndex + 1} з {playlist.songs.length}
-            </span>
-            {isLiveFollower && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400 font-medium">
-                • Синхронізовано
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className={
-                currentSongIndex === 0 ? "pointer-events-none opacity-50" : ""
-              }
-            >
-              <Link
-                href={
-                  currentSongIndex > 0
-                    ? asConductorSessionId
-                      ? `/songs/${playlist.songs[currentSongIndex - 1].slug}?list=${listId}&group=${groupId}&asConductor=${asConductorSessionId}`
-                      : conductorSessionId
-                        ? `/songs/${playlist.songs[currentSongIndex - 1].slug}?list=${listId}&group=${groupId}&conductor=${conductorSessionId}`
-                        : `/songs/${playlist.songs[currentSongIndex - 1].slug}?list=${listId}&group=${groupId}`
-                    : "#"
-                }
-                onClick={() => {
-                  if (asConductorSessionId && currentSongIndex > 0) {
-                    updateConductorSession(
-                      playlist.songs[currentSongIndex - 1].slug,
-                      0,
-                    );
-                  }
-                }}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Назад
-              </Link>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className={
-                currentSongIndex === playlist.songs.length - 1
-                  ? "pointer-events-none opacity-50"
-                  : ""
-              }
-            >
-              <Link
-                href={
-                  currentSongIndex < playlist.songs.length - 1
-                    ? asConductorSessionId
-                      ? `/songs/${playlist.songs[currentSongIndex + 1].slug}?list=${listId}&group=${groupId}&asConductor=${asConductorSessionId}`
-                      : conductorSessionId
-                        ? `/songs/${playlist.songs[currentSongIndex + 1].slug}?list=${listId}&group=${groupId}&conductor=${conductorSessionId}`
-                        : `/songs/${playlist.songs[currentSongIndex + 1].slug}?list=${listId}&group=${groupId}`
-                    : "#"
-                }
-                onClick={() => {
-                  if (
-                    asConductorSessionId &&
-                    currentSongIndex < playlist.songs.length - 1
-                  ) {
-                    updateConductorSession(
-                      playlist.songs[currentSongIndex + 1].slug,
-                      0,
-                    );
-                  }
-                }}
-              >
-                Вперед
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      )}
+      {hasPlaylistNav && playlist ? (
+        <SongPlaylistNavigation
+          asConductorSessionId={asConductorSessionId}
+          conductorSessionId={conductorSessionId}
+          currentSongIndex={currentSongIndex}
+          groupId={groupId}
+          isLiveFollower={isLiveFollower}
+          listId={listId}
+          playlist={playlist}
+          onConductorSongChange={(songSlug) => updateConductorSession(songSlug, 0)}
+        />
+      ) : null}
 
       {/* Header section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
