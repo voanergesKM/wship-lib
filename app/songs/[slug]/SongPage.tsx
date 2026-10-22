@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Edit3,
@@ -430,221 +430,96 @@ export function SongPage({ slug }: { slug: string }) {
         />
       ) : null}
 
-      {/* Header section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {mode === "view" ? (
-              <Eye className="size-4" />
-            ) : (
-              <Edit3 className="size-4" />
+      <SongPageHeader
+        title={data.title}
+        mode={mode}
+        creatorDisplayName={creatorDisplayName}
+      >
+        {mode === "view" ? (
+          <>
+            {isAuthenticated && (
+              <Button type="button" variant="outline" onClick={() => setIsAddOpen(true)}>
+                <ListPlus className="size-4" />
+                Додати до списку
+              </Button>
             )}
-            <span>
-              {mode === "view" ? "Перегляд пісні" : "Редагування пісні"}
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-normal">{data.title}</h1>
-          {creatorDisplayName && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
-              <span>Додав(ла):</span>
-              <span className="font-medium text-foreground">
-                {creatorDisplayName}
-              </span>
-            </div>
-          )}
-        </div>
 
-        <div className="flex gap-2 items-center flex-wrap">
-          {mode === "view" && isAuthenticated && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsAddOpen(true)}
-            >
-              <ListPlus className="size-4" />
-              Додати до списку
-            </Button>
-          )}
+            {hasSections && (
+              <SongArrangementControls
+                arrangements={arrangements}
+                currentArrangement={currentArrangement}
+                isPlayingStructure={isPlayingStructure}
+                canManageCurrentArrangement={canManageArrangement(currentArrangement)}
+                onTogglePlayback={() => {
+                  setIsPlayingStructure((prev) => !prev);
+                  setActiveStepIndex(0);
+                }}
+                onSelectArrangement={(id) => {
+                  setSelectedArrangementId(id);
+                  setActiveStepIndex(0);
+                }}
+                onEditArrangement={(arrangement) => {
+                  setArrangementToEdit(arrangement);
+                  setIsArrangementDialogOpen(true);
+                }}
+                onDeleteArrangement={(arrangement) => {
+                  setArrangementToDelete(arrangement);
+                  setIsDeleteArrangementDialogOpen(true);
+                }}
+              />
+            )}
 
-          {/* Structure buttons (Arrangements) */}
-          {mode === "view" && hasSections && (
-            <div className="flex flex-wrap items-center gap-2">
-              {currentArrangement ? (
-                <>
-                  <Button
-                    type="button"
-                    variant={isPlayingStructure ? "default" : "outline"}
-                    onClick={() => {
-                      setIsPlayingStructure((prev) => !prev);
-                      setActiveStepIndex(0);
-                    }}
-                    title={
-                      isPlayingStructure
-                        ? "Зупинити програвання структури"
-                        : "Запустити програвання по структурі зі скролом"
-                    }
-                    className="gap-1.5"
-                  >
-                    {isPlayingStructure ? (
-                      <Pause className="size-4" />
-                    ) : (
-                      <Play className="size-4 fill-current" />
-                    )}
-                    <span>Структура: {currentArrangement.name}</span>
-                  </Button>
+            {canEdit && (
+              <>
+                <SongProposalReviewButton
+                  pendingProposalCount={pendingProposals.length}
+                  proposalCount={proposals.length}
+                  onReviewProposals={() => setIsReviewDialogOpen(true)}
+                />
+                <Button type="button" onClick={() => setMode("edit")}>
+                  <Edit3 className="size-4 mr-1" />
+                  Редагувати
+                </Button>
+              </>
+            )}
 
-                  {arrangements.length > 1 && (
-                    <Select
-                      value={currentArrangement._id}
-                      onValueChange={(val) => {
-                        setSelectedArrangementId(val);
-                        setActiveStepIndex(0);
-                      }}
-                    >
-                      <SelectTrigger
-                        className="h-9 min-w-[130px] max-w-[200px] text-xs"
-                        title="Змінити вибрану структуру"
-                      >
-                        <SelectValue placeholder="Виберіть структуру" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {arrangements.map((arr) => (
-                          <SelectItem key={arr._id} value={arr._id}>
-                            {arr.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  {canManageArrangement(currentArrangement) && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          setArrangementToEdit(currentArrangement);
-                          setIsArrangementDialogOpen(true);
-                        }}
-                        title={`Редагувати структуру "${currentArrangement.name}"`}
-                        aria-label="Редагувати структуру"
-                      >
-                        <Edit3 className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          setArrangementToDelete(currentArrangement);
-                          setIsDeleteArrangementDialogOpen(true);
-                        }}
-                        className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                        title={`Видалити структуру "${currentArrangement.name}"`}
-                        aria-label="Видалити структуру"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : null}
-
+            {isAdmin && (
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={() => {
-                  setArrangementToEdit(null);
-                  setIsArrangementDialogOpen(true);
-                }}
-                title="Створити нову структуру пісні"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                title="Видалити пісню"
               >
-                <ListMusic className="size-4 mr-1 text-primary" />
-                {arrangements.length > 0 ? "+ Структура" : "Створити структуру"}
+                <Trash2 className="size-4 mr-1" />
+                Видалити
               </Button>
-            </div>
-          )}
+            )}
 
-          {/* Author/Admin controls */}
-          {mode === "view" && canEdit && (
-            <>
-              {pendingProposals.length > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 font-semibold"
-                  onClick={() => setIsReviewDialogOpen(true)}
-                >
-                  <Sparkles className="size-4 mr-1 text-amber-500" />
-                  Запропоновані зміни ({pendingProposals.length})
-                </Button>
-              )}
-
-              {proposals.length > 0 && pendingProposals.length === 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsReviewDialogOpen(true)}
-                >
-                  <History className="size-4 mr-1" />
-                  Історія змін ({proposals.length})
-                </Button>
-              )}
-
-              <Button type="button" onClick={() => setMode("edit")}>
-                <Edit3 className="size-4 mr-1" />
-                Редагувати
+            {!canEdit && !myPendingProposal && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    setIsProposalDialogOpen(true);
+                  } else {
+                    setIsLoginDialogOpen(true);
+                  }
+                }}
+              >
+                <GitPullRequest className="size-4 mr-1 text-primary" />
+                Запропонувати зміни
               </Button>
-            </>
-          )}
-
-          {/* Admin delete button */}
-          {mode === "view" && isAdmin && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="text-destructive border-destructive/20 hover:bg-destructive/10"
-              title="Видалити пісню"
-            >
-              <Trash2 className="size-4 mr-1" />
-              Видалити
-            </Button>
-          )}
-
-          {/* Regular user or Guest controls */}
-          {mode === "view" && !canEdit && !myPendingProposal && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (isAuthenticated) {
-                  setIsProposalDialogOpen(true);
-                } else {
-                  setIsLoginDialogOpen(true);
-                }
-              }}
-            >
-              <GitPullRequest className="size-4 mr-1 text-primary" />
-              Запропонувати зміни
-            </Button>
-          )}
-
-          {mode === "edit" && canEdit && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setMode("view")}
-            >
-              <X className="size-4 mr-1" />
-              Скасувати
-            </Button>
-          )}
-        </div>
-      </div>
+            )}
+          </>
+        ) : canEdit ? (
+          <Button type="button" variant="outline" onClick={() => setMode("view")}>
+            <X className="size-4 mr-1" />
+            Скасувати
+          </Button>
+        ) : null}
+      </SongPageHeader>
 
       {/* Banner if user has an active pending proposal */}
       {mode === "view" && !canEdit && myPendingProposal && (
@@ -828,5 +703,195 @@ export function SongPage({ slug }: { slug: string }) {
         </DeleteConfirmationDialog>
       )}
     </div>
+  );
+}
+
+interface SongPageHeaderProps {
+  title: string;
+  mode: "view" | "edit";
+  creatorDisplayName?: string;
+  children: ReactNode;
+}
+
+function SongPageHeader({
+  title,
+  mode,
+  creatorDisplayName,
+  children,
+}: SongPageHeaderProps) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {mode === "view" ? (
+            <Eye className="size-4" />
+          ) : (
+            <Edit3 className="size-4" />
+          )}
+          <span>
+            {mode === "view" ? "Перегляд пісні" : "Редагування пісні"}
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-normal">{title}</h1>
+        {creatorDisplayName && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+            <span>Додав(ла):</span>
+            <span className="font-medium text-foreground">
+              {creatorDisplayName}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 items-center flex-wrap">{children}</div>
+    </div>
+  );
+}
+
+interface SongArrangementControlsProps {
+  arrangements: SongArrangement[];
+  currentArrangement: SongArrangement | null;
+  isPlayingStructure: boolean;
+  canManageCurrentArrangement: boolean;
+  onTogglePlayback: () => void;
+  onSelectArrangement: (id: string) => void;
+  onEditArrangement: (arrangement: SongArrangement | null) => void;
+  onDeleteArrangement: (arrangement: SongArrangement) => void;
+}
+
+function SongArrangementControls({
+  arrangements,
+  currentArrangement,
+  isPlayingStructure,
+  canManageCurrentArrangement,
+  onTogglePlayback,
+  onSelectArrangement,
+  onEditArrangement,
+  onDeleteArrangement,
+}: SongArrangementControlsProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {currentArrangement ? (
+        <>
+          <Button
+            type="button"
+            variant={isPlayingStructure ? "default" : "outline"}
+            onClick={onTogglePlayback}
+            title={
+              isPlayingStructure
+                ? "Зупинити програвання структури"
+                : "Запустити програвання по структурі зі скролом"
+            }
+            className="gap-1.5"
+          >
+            {isPlayingStructure ? (
+              <Pause className="size-4" />
+            ) : (
+              <Play className="size-4 fill-current" />
+            )}
+            <span>Структура: {currentArrangement.name}</span>
+          </Button>
+
+          {arrangements.length > 1 && (
+            <Select
+              value={currentArrangement._id}
+              onValueChange={onSelectArrangement}
+            >
+              <SelectTrigger
+                className="h-9 min-w-[130px] max-w-[200px] text-xs"
+                title="Змінити вибрану структуру"
+              >
+                <SelectValue placeholder="Виберіть структуру" />
+              </SelectTrigger>
+              <SelectContent>
+                {arrangements.map((arr) => (
+                  <SelectItem key={arr._id} value={arr._id}>
+                    {arr.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {canManageCurrentArrangement && (
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => onEditArrangement(currentArrangement)}
+                title={`Редагувати структуру "${currentArrangement.name}"`}
+                aria-label="Редагувати структуру"
+              >
+                <Edit3 className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => onDeleteArrangement(currentArrangement)}
+                className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                title={`Видалити структуру "${currentArrangement.name}"`}
+                aria-label="Видалити структуру"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          )}
+        </>
+      ) : null}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onEditArrangement(null)}
+        title="Створити нову структуру пісні"
+      >
+        <ListMusic className="size-4 mr-1 text-primary" />
+        {arrangements.length > 0 ? "+ Структура" : "Створити структуру"}
+      </Button>
+    </div>
+  );
+}
+
+interface SongProposalReviewButtonProps {
+  pendingProposalCount: number;
+  proposalCount: number;
+  onReviewProposals: () => void;
+}
+
+function SongProposalReviewButton({
+  pendingProposalCount,
+  proposalCount,
+  onReviewProposals,
+}: SongProposalReviewButtonProps) {
+  return (
+    <>
+      {pendingProposalCount > 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 font-semibold"
+          onClick={onReviewProposals}
+        >
+          <Sparkles className="size-4 mr-1 text-amber-500" />
+          Запропоновані зміни ({pendingProposalCount})
+        </Button>
+      )}
+
+      {proposalCount > 0 && pendingProposalCount === 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onReviewProposals}
+        >
+          <History className="size-4 mr-1" />
+          Історія змін ({proposalCount})
+        </Button>
+      )}
+
+    </>
   );
 }
