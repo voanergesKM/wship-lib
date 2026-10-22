@@ -6,7 +6,7 @@ import { useAuth } from "../providers/AuthContext";
 
 import ThemeToggle from "../ToggleTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ArrowLeft, LogOut, Plus, UserRound, Users } from "lucide-react";
+import { ArrowLeft, Guitar, LogOut, Plus, UserRound, Users } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -47,6 +47,11 @@ export const Header = () => {
         </div>
 
         <div className="flex gap-2 items-center">
+          <Button asChild size="icon" variant="ghost">
+            <Link href="/chords" aria-label="Каталог акордів" title="Каталог акордів">
+              <Guitar />
+            </Link>
+          </Button>
           <ThemeToggle />
 
           <Button

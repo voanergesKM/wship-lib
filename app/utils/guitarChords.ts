@@ -5,7 +5,7 @@ export interface GuitarVoicing {
   omittedIntervals?: readonly number[];
 }
 
-type Quality = "" | "m" | "7" | "maj7" | "m7" | "m7b5" | "sus4"
+export type GuitarChordQuality = "" | "m" | "7" | "maj7" | "m7" | "m7b5" | "sus4"
   | "6" | "m6" | "6/9" | "9" | "maj9" | "m9" | "add9" | "madd9"
   | "sus2" | "7sus4" | "7sus2" | "dim" | "dim7" | "aug"
   | "7b9" | "7#9" | "7#5" | "m11" | "13" | "5";
@@ -14,7 +14,7 @@ const ROOTS: Record<string, number> = {
   "E#": 5, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8,
   A: 9, "A#": 10, Bb: 10, B: 11, Cb: 11, "B#": 0,
 };
-const ALIASES: Record<string, Quality> = {
+const ALIASES: Record<string, GuitarChordQuality> = {
   "": "", maj: "", M: "", m: "m", min: "m", "-": "m",
   "7": "7", maj7: "maj7", "7maj": "maj7", M7: "maj7", "Δ7": "maj7",
   m7: "m7", min7: "m7", "-7": "m7", m7b5: "m7b5", "ø": "m7b5", "ø7": "m7b5",
@@ -29,7 +29,7 @@ const ALIASES: Record<string, Quality> = {
 };
 // Complete E- and A-root forms. Every sounding string, including open strings,
 // is moved together; muted strings remain muted.
-const FORMS: Partial<Record<Quality, readonly [GuitarFrets, GuitarFrets]>> = {
+const FORMS: Partial<Record<GuitarChordQuality, readonly [GuitarFrets, GuitarFrets]>> = {
   "": [[0, 2, 2, 1, 0, 0], [-1, 0, 2, 2, 2, 0]],
   m: [[0, 2, 2, 0, 0, 0], [-1, 0, 2, 2, 1, 0]],
   "7": [[0, 2, 0, 1, 0, 0], [-1, 0, 2, 0, 2, 0]],
@@ -51,7 +51,7 @@ interface MovableForm extends GuitarVoicing {
   root: number;
 }
 // Shapes in standard tuning. Omitted intervals are explicit, never inferred.
-const EXTRA_FORMS: Partial<Record<Quality, readonly MovableForm[]>> = {
+const EXTRA_FORMS: Partial<Record<GuitarChordQuality, readonly MovableForm[]>> = {
   "": [{ root: 2, frets: [-1, -1, 0, 2, 3, 2] }, { root: 0, frets: [-1, -1, -1, 5, 5, 3] }],
   m: [{ root: 2, frets: [-1, -1, 0, 2, 3, 1] }],
   "6": [{ root: 0, frets: [-1, 3, 2, 2, 1, 3] }, { root: 9, frets: [-1, 0, 2, 2, 2, 2] }],
@@ -80,7 +80,7 @@ const EXTRA_FORMS: Partial<Record<Quality, readonly MovableForm[]>> = {
 const TUNING = [40, 45, 50, 55, 59, 64] as const;
 interface SlashForm {
   root: number;
-  quality: Quality;
+  quality: GuitarChordQuality;
   bassInterval: number;
   frets: GuitarFrets;
 }
