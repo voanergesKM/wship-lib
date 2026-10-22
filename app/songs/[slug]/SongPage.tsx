@@ -10,12 +10,10 @@ import {
   ListPlus,
   GitPullRequest,
   History,
-  Clock,
   Sparkles,
   Play,
   Pause,
   Trash2,
-  Loader2,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -54,14 +52,9 @@ import { SongArrangementDialog } from "../_components/SongArrangementDialog";
 import { SongStructurePlayer } from "../_components/SongStructurePlayer";
 import { useConductorFollow } from "@/hooks/useConductorFollow";
 import { useConductorSession } from "@/hooks/useConductorSession";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { TelegramDesktopLogin } from "@/components/ui/telegram-desktop-login";
+import { LoginDialog } from "@/components/shared/LoginDialog";
+import { DeleteConfirmationDialog } from "@/components/shared/DeleteConfirmationDialog";
+import { SongPendingProposalBanner } from "../_components/SongPendingProposalBanner";
 import { SongLiveRehearsalBanners } from "../_components/SongLiveRehearsalBanners";
 import { SongPlaylistNavigation } from "../_components/SongPlaylistNavigation";
 
@@ -655,40 +648,10 @@ export function SongPage({ slug }: { slug: string }) {
 
       {/* Banner if user has an active pending proposal */}
       {mode === "view" && !canEdit && myPendingProposal && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-          <div className="flex items-start gap-3">
-            <Clock className="size-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-semibold text-amber-900 dark:text-amber-200">
-                Ваша пропозиція змін очікує на розгляд автора
-              </p>
-              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
-                Ви можете переглянути або оновити запропоновані правки, або
-                скасувати пропозицію.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-background"
-              onClick={() => setIsProposalDialogOpen(true)}
-            >
-              <Edit3 className="size-3.5 mr-1" />
-              Редагувати
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-destructive hover:bg-destructive/10"
-              onClick={handleCancelProposal}
-            >
-              <X className="size-3.5 mr-1" />
-              Скасувати
-            </Button>
-          </div>
-        </div>
+        <SongPendingProposalBanner
+          onEdit={() => setIsProposalDialogOpen(true)}
+          onCancel={handleCancelProposal}
+        />
       )}
 
       {/* Interactive Structure Playback bar */}
@@ -772,59 +735,24 @@ export function SongPage({ slug }: { slug: string }) {
       )}
 
       {isDeleteArrangementDialogOpen && arrangementToDelete && (
-        <Dialog
+        <DeleteConfirmationDialog
           open={isDeleteArrangementDialogOpen}
           onOpenChange={(open) => {
             setIsDeleteArrangementDialogOpen(open);
             if (!open) setArrangementToDelete(null);
           }}
+          title="Видалити структуру"
+          isDeleting={isDeletingArrangement}
+          onConfirm={handleConfirmDeleteArrangement}
         >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive">
-                <Trash2 className="size-5" />
-                Видалити структуру
-              </DialogTitle>
-              <DialogDescription className="space-y-2 pt-2 text-left">
-                <span>
-                  Ви впевнені, що хочете видалити структуру &laquo;
-                  {arrangementToDelete.name}&raquo;?
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  Цю дію неможливо буде скасувати. Структуру також буде вилучено з усіх списків пісень, де її було призначено.
-                </span>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsDeleteArrangementDialogOpen(false);
-                  setArrangementToDelete(null);
-                }}
-                disabled={isDeletingArrangement}
-              >
-                Скасувати
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleConfirmDeleteArrangement}
-                disabled={isDeletingArrangement}
-              >
-                {isDeletingArrangement ? (
-                  <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                    Видалення...
-                  </>
-                ) : (
-                  "Видалити"
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <span>
+            Ви впевнені, що хочете видалити структуру &laquo;
+            {arrangementToDelete.name}&raquo;?
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            Цю дію неможливо буде скасувати. Структуру також буде вилучено з усіх списків пісень, де її було призначено.
+          </span>
+        </DeleteConfirmationDialog>
       )}
 
       {isProposalDialogOpen && (
@@ -871,74 +799,33 @@ export function SongPage({ slug }: { slug: string }) {
       )}
 
       {isLoginDialogOpen && (
-        <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-center">Авторизація</DialogTitle>
-              <DialogDescription className="text-center">
-                Увійдіть через Telegram, щоб запропонувати зміни до цієї пісні.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col items-center justify-center py-4">
-              <TelegramDesktopLogin
-                botName={
-                  process.env.NEXT_PUBLIC_BOT_USERNAME || "voanergesKM_bot"
-                }
-                onAuth={async () => {
-                  setIsLoginDialogOpen(false);
-                  await refreshUser();
-                  setIsProposalDialogOpen(true);
-                }}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <LoginDialog
+          open={isLoginDialogOpen}
+          onOpenChange={setIsLoginDialogOpen}
+          description="Увійдіть через Telegram, щоб запропонувати зміни до цієї пісні."
+          onAuth={async () => {
+            setIsLoginDialogOpen(false);
+            await refreshUser();
+            setIsProposalDialogOpen(true);
+          }}
+        />
       )}
 
       {isDeleteDialogOpen && (
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive">
-                <Trash2 className="size-5" />
-                Видалити пісню
-              </DialogTitle>
-              <DialogDescription className="space-y-2 pt-2 text-left">
-                <span>
-                  Ви впевнені, що хочете видалити пісню <strong>«{data.title}»</strong>?
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  Ця дія є незворотною. Пісню буде видалено з бібліотеки, а також автоматично вилучено з усіх списків відтворень разом із пов&apos;язаними структурами та історією пропозицій.
-                </span>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-                disabled={isDeletingSong}
-              >
-                Скасувати
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDeleteSong}
-                disabled={isDeletingSong}
-              >
-                {isDeletingSong ? (
-                  <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                    Видалення...
-                  </>
-                ) : (
-                  "Видалити"
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Видалити пісню"
+          isDeleting={isDeletingSong}
+          onConfirm={handleDeleteSong}
+        >
+          <span>
+            Ви впевнені, що хочете видалити пісню <strong>«{data.title}»</strong>?
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            Ця дія є незворотною. Пісню буде видалено з бібліотеки, а також автоматично вилучено з усіх списків відтворень разом із пов&apos;язаними структурами та історією пропозицій.
+          </span>
+        </DeleteConfirmationDialog>
       )}
     </div>
   );
