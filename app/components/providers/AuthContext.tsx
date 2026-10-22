@@ -9,7 +9,9 @@ import React, {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface AuthUser {
+import type { UserPreferences } from "@/types/user-preferences";
+
+export interface AuthUser {
   id: string;
   telegramId: string;
   firstName: string;
@@ -17,6 +19,7 @@ interface AuthUser {
   role: string;
   photoUrl: string | null;
   email?: string | null;
+  preferences: UserPreferences;
 }
 
 interface AuthContextType {

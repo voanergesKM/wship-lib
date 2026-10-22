@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { transposeContent } from "@/utils/chordTransposition";
 import { SongControls, SongPreview } from "./SongPreview";
 import { SongSheet } from "./SongSheet";
+import { useSongDisplayPreferences } from "@/hooks/useSongDisplayPreferences";
 
 type SongTextProps = {
   content: string;
@@ -19,8 +20,9 @@ export function SongText({
   chordColor = "#22c55e",
   activeSectionId = null,
 }: SongTextProps) {
-  const [showChords, setShowChords] = useState(true);
-  const [fontSize, setFontSize] = useState(14);
+  const { songDisplayPreferences, updateSongDisplayPreferences } =
+    useSongDisplayPreferences();
+  const { fontSize, showChords } = songDisplayPreferences;
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [capoFret, setCapoFret] = useState(0);
   const [layoutMode, setLayoutMode] = useState<"list" | "grid">("list");
@@ -38,15 +40,15 @@ export function SongText({
   }, [content, transposeSemitones, capoFret]);
 
   const handleToggleChords = () => {
-    setShowChords((prev) => !prev);
+    updateSongDisplayPreferences({ showChords: !showChords });
   };
 
   const handleFontSizeUp = () => {
-    setFontSize((prev) => prev + 2);
+    updateSongDisplayPreferences({ fontSize: Math.min(24, fontSize + 2) });
   };
 
   const handleFontSizeDown = () => {
-    setFontSize((prev) => Math.max(10, prev - 2));
+    updateSongDisplayPreferences({ fontSize: Math.max(10, fontSize - 2) });
   };
 
   const handleTransposeUp = () => {
