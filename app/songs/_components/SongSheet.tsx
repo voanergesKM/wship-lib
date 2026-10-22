@@ -1,3 +1,4 @@
+import { ChordPopover } from "@/components/chords/ChordPopover";
 import { cn } from "@/lib/utils";
 import { parseSong } from "@/utils/parseSong";
 import { lineToWords } from "@/utils/chordWords";
@@ -5,6 +6,7 @@ import { Block } from "@/types/parse-song.types";
 
 export type SongSheetProps = {
   content: string;
+  capoFret?: number;
   fontSize: number;
   showChords?: boolean;
   chordColor?: string;
@@ -15,6 +17,7 @@ export type SongSheetProps = {
 
 export function SongSheet({
   content,
+  capoFret = 0,
   fontSize,
   showChords = true,
   chordColor = "#22c55e",
@@ -90,7 +93,9 @@ export function SongSheet({
                       style={{ color: chordColor }}
                       className="font-bold whitespace-pre text-[0.85em] leading-tight min-h-[1.25em]"
                     >
-                      {syl.chord || (
+                      {syl.chord ? (
+                        <ChordPopover chord={syl.chord} capoFret={capoFret} />
+                      ) : (
                         <span className="invisible select-none">&#8203;</span>
                       )}
                     </span>

@@ -51,13 +51,9 @@ export function transposeChord(chord: string, semitones: number): string {
     return chord;
   }
 
-  if (chord.includes("/")) {
-    const [mainChord, bassNote] = chord.split("/");
-    
-    const transposedMain = transposeSingleChord(mainChord, semitones);
-    const transposedBass = transposeSingleChord(bassNote, semitones);
-    
-    return `${transposedMain}/${transposedBass}`;
+  const slashChord = /^(.*)\/([A-G][#b]?)$/.exec(chord);
+  if (slashChord) {
+    return `${transposeSingleChord(slashChord[1], semitones)}/${transposeNote(slashChord[2], semitones)}`;
   }
 
   return transposeSingleChord(chord, semitones);

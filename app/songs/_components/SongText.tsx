@@ -114,7 +114,9 @@ export function SongText({
               )}
 
               <SongPreview
-                content={transposedContent}
+                key={`${transposeSemitones}:${capoFret}`}
+                defaultCapoFret={capoFret}
+                content={transposeContent(content, transposeSemitones)}
                 chordColor={chordColor}
                 dialogTrigger={
                   <Button
@@ -132,6 +134,7 @@ export function SongText({
       </div>
 
       <SongSheet
+        capoFret={capoFret}
         content={transposedContent}
         fontSize={fontSize}
         showChords={showChords}

@@ -26,12 +26,14 @@ import { ReactNode, useState, useMemo } from "react";
 import { SongSheet } from "./SongSheet";
 
 type Props = {
+  defaultCapoFret?: number;
   content: string;
   chordColor?: string;
   dialogTrigger?: ReactNode;
 };
 
 export function SongPreview({
+  defaultCapoFret = 0,
   content,
   chordColor = "#22c55e",
   dialogTrigger,
@@ -39,7 +41,7 @@ export function SongPreview({
   const [showChords, setShowChords] = useState(true);
   const [fontSize, setFontSize] = useState(14);
   const [transposeSemitones, setTransposeSemitones] = useState(0);
-  const [capoFret, setCapoFret] = useState(0);
+  const [capoFret, setCapoFret] = useState(defaultCapoFret);
 
   const transposedContent = useMemo(() => {
     const effectiveTranspose = transposeSemitones - capoFret;
@@ -114,6 +116,7 @@ export function SongPreview({
         </DialogHeader>
 
         <SongSheet
+          capoFret={capoFret}
           content={transposedContent}
           fontSize={fontSize}
           showChords={showChords}
