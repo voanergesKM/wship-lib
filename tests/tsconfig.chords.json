@@ -15,6 +15,7 @@
   },
   "include": [
     "guitarChords.test.ts",
-    "chordValidation.test.ts"
+    "chordValidation.test.ts",
+    "chordAudio.test.ts"
   ]
 }

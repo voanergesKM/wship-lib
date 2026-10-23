@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { ChordAudioButton } from "@/components/chords/ChordAudioButton";
 import { ChordDiagram } from "@/components/chords/ChordDiagram";
 import { chordCatalogKey, chordRequest, useChordCatalog } from "@/hooks/useChordCatalog";
 import { chordSymbols, definitionSchema, intervalSignature, proposalSchema, validateVoicingNotes, voicingSchema } from "@/lib/chords/validation";
@@ -63,7 +64,7 @@ export function VoicingEditorDialog({ mode, onClose }: { mode: EditorMode; onClo
             </fieldset>
             <div className="flex flex-col gap-3 md:sticky md:top-0 md:self-start">
               <h3 className="font-semibold">Живий передпоказ: {name}</h3>
-              {parsed.success ? <><ChordDiagram voicing={parsed.data} name={name} /><p className="text-sm">Ноти від товстої струни: {soundingNotes(parsed.data.frets).map((note) => NOTE_NAMES[note % 12]).join(" · ")}</p></> : <p className="text-sm text-muted-foreground">Введіть коректні лади, пальці та баре, щоб побачити схему.</p>}
+              {parsed.success ? <><ChordDiagram voicing={parsed.data} name={name} /><ChordAudioButton frets={parsed.data.frets} name={name} /><p className="text-sm">Ноти від товстої струни: {soundingNotes(parsed.data.frets).map((note) => NOTE_NAMES[note % 12]).join(" · ")}</p></> : <p className="text-sm text-muted-foreground">Введіть коректні лади, пальці та баре, щоб побачити схему.</p>}
               {definition && <p className="text-sm text-muted-foreground">Інтервали типу: {definition.intervals.join(" · ")}. Дозволені пропуски: {definition.optionalIntervals.join(" · ") || "немає"}.</p>}
               {formError && <p role="alert" className="text-sm text-destructive">{formError}</p>}
               {mutation.error && <p role="alert" className="text-sm text-destructive">{mutation.error.message}</p>}

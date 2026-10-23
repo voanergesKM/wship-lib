@@ -41,3 +41,7 @@ Update `app/chords/_components/ChordFormatGuideDialog.tsx` AND this file wheneve
 5. Stop the isolated server and remove the disposable container. Do not reuse this database for subsequent runs: the test intentionally leaves approved catalog changes for assertions.
 
 Browser smoke checks: open `/chords` as a test user, edit an Amaj7 form to `5 7 6 6 5 5`, set fingers `1 4 2 3 1 1` and barre `5 6 1 1`; verify live dots/numbers/barre. Change a note and confirm submission is blocked; open/close the nested guide; test a 390px viewport; submit a valid proposal; verify a duplicate new type is blocked. Use only the isolated server for submission checks.
+
+## Audio preview
+
+The viewer and editor synthesize the selected voicing on demand using Web Audio, without samples or database changes. Frequencies use standard-tuning MIDI pitches plus fret and capo offset (A4 = 440 Hz); muted strings are skipped and open strings retained. The song viewer passes its capo offset; editor templates use no capo. A short low-to-high strum uses harmonic oscillators with decaying volume/brightness, an approximate plucked timbre rather than a recorded guitar. Only one preview plays at a time. Stop, shape/capo changes and unmount release playback nodes; AudioContext is created only on a button click and shared. Playback failures are shown inline.

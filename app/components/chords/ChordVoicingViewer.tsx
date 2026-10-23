@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getGuitarVoicings, notePitch } from "@/utils/guitarChords";
+import { ChordAudioButton } from "./ChordAudioButton";
 import { ChordDiagram } from "./ChordDiagram";
 import { useChordCatalog } from "@/hooks/useChordCatalog";
 import { useAuth } from "@/components/providers/AuthContext";
@@ -28,6 +29,7 @@ export function ChordVoicingViewer({ chord, capoFret = 0, editable = false }: { 
       {voicing ? (
         <>
           <ChordDiagram voicing={voicing} name={chord} />
+          <ChordAudioButton frets={voicing.frets} name={chord} capoFret={capoFret} />
           {!!voicing.omittedIntervals?.length && (
             <p className="text-xs text-muted-foreground text-center">Пропущені інтервали: {voicing.omittedIntervals?.join(", ")}</p>
           )}
