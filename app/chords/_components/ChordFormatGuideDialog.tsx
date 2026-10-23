@@ -17,7 +17,7 @@ export function ChordFormatGuideDialog() {
           Як додати аплікатуру?
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto max-w-4xl w-full">
         <DialogHeader>
           <DialogTitle>Акорди й аплікатури: інструкція</DialogTitle>
           <DialogDescription>

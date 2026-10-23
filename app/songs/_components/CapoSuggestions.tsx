@@ -35,7 +35,7 @@ export function CapoSuggestions(props: Props) {
           Зручні акорди
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto max-w-3xl w-full">
         <DialogHeader>
           <DialogTitle>Підібрати зручні акорди</DialogTitle>
           <DialogDescription>
