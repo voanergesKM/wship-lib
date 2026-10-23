@@ -54,7 +54,11 @@ export function SongView({
       </TabsList>
 
       <TabsContent value="text">
-        <SongText content={document} activeSectionId={activeSectionId} />
+        <SongText
+          songKey={songKey}
+          content={document}
+          activeSectionId={activeSectionId}
+        />
       </TabsContent>
 
       <TabsContent value="media">

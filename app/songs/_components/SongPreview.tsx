@@ -141,6 +141,7 @@ export type SongControlsProps = {
   onResetCapo: () => void;
   capoFret: number;
   extraActions?: ReactNode;
+  settingsActions?: ReactNode;
 };
 
 export function SongControls({
@@ -156,6 +157,7 @@ export function SongControls({
   onResetCapo,
   capoFret,
   extraActions,
+  settingsActions,
 }: SongControlsProps) {
   return (
     <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
@@ -273,6 +275,7 @@ export function SongControls({
                 </div>
               </div>
             </div>
+            {settingsActions}
           </div>
         </PopoverContent>
       </Popover>

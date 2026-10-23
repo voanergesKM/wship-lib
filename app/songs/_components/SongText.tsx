@@ -6,17 +6,20 @@ import { LayoutGrid, Maximize2, Rows } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { transposeContent } from "@/utils/chordTransposition";
 import { SongControls, SongPreview } from "./SongPreview";
+import { CapoSuggestions } from "./CapoSuggestions";
 import { SongSheet } from "./SongSheet";
 import { useSongDisplayPreferences } from "@/hooks/useSongDisplayPreferences";
 
 type SongTextProps = {
   content: string;
+  songKey?: string;
   chordColor?: string;
   activeSectionId?: string | null;
 };
 
 export function SongText({
   content,
+  songKey,
   chordColor = "#22c55e",
   activeSectionId = null,
 }: SongTextProps) {
@@ -25,6 +28,10 @@ export function SongText({
   const { fontSize, showChords } = songDisplayPreferences;
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [capoFret, setCapoFret] = useState(0);
+  const [previousSettings, setPreviousSettings] = useState<{
+    capo: number;
+    transpose: number;
+  } | null>(null);
   const [layoutMode, setLayoutMode] = useState<"list" | "grid">("list");
 
   const hasSections = useMemo(
@@ -90,6 +97,38 @@ export function SongText({
           onCapoDown={handleCapoDown}
           onResetCapo={handleResetCapo}
           capoFret={capoFret}
+          settingsActions={
+            <div className="flex flex-col gap-2">
+              <CapoSuggestions
+                content={content}
+                songKey={songKey}
+                transpose={transposeSemitones}
+                capo={capoFret}
+                onApply={(capo) => {
+                  setPreviousSettings({
+                    capo: capoFret,
+                    transpose: transposeSemitones,
+                  });
+                  setCapoFret(capo);
+                }}
+              />
+              {previousSettings && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto whitespace-normal"
+                  onClick={() => {
+                    setCapoFret(previousSettings.capo);
+                    setTransposeSemitones(previousSettings.transpose);
+                    setPreviousSettings(null);
+                  }}
+                >
+                  Повернути попередні налаштування
+                </Button>
+              )}
+            </div>
+          }
           extraActions={
             <div className="flex items-center gap-2">
               {hasSections && (
