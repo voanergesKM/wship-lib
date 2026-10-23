@@ -1,0 +1,2380 @@
+{
+  "chords": [
+    {
+      "_id": "seed-type-0",
+      "quality": "",
+      "name": "Мажор",
+      "category": "basic",
+      "aliases": [
+        "",
+        "maj",
+        "M"
+      ],
+      "intervals": [
+        0,
+        4,
+        7
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-1",
+      "quality": "m",
+      "name": "Мінор",
+      "category": "basic",
+      "aliases": [
+        "m",
+        "min",
+        "-"
+      ],
+      "intervals": [
+        0,
+        3,
+        7
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-2",
+      "quality": "5",
+      "name": "Квінтакорд",
+      "category": "basic",
+      "aliases": [
+        "5"
+      ],
+      "intervals": [
+        0,
+        7
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-3",
+      "quality": "7",
+      "name": "Домінантсептакорд",
+      "category": "jazz",
+      "aliases": [
+        "7"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        10
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-4",
+      "quality": "maj7",
+      "name": "Великий мажорний септакорд",
+      "category": "jazz",
+      "aliases": [
+        "maj7",
+        "7maj",
+        "M7",
+        "Δ7"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        11
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-5",
+      "quality": "m7",
+      "name": "Малий мінорний септакорд",
+      "category": "jazz",
+      "aliases": [
+        "m7",
+        "min7",
+        "-7"
+      ],
+      "intervals": [
+        0,
+        3,
+        7,
+        10
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-6",
+      "quality": "m7b5",
+      "name": "Напівзменшений септакорд",
+      "category": "jazz",
+      "aliases": [
+        "m7b5",
+        "ø",
+        "ø7"
+      ],
+      "intervals": [
+        0,
+        3,
+        6,
+        10
+      ],
+      "optionalIntervals": []
+    },
+    {
+      "_id": "seed-type-7",
+      "quality": "6",
+      "name": "Мажор із секстою",
+      "category": "jazz",
+      "aliases": [
+        "6"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        9
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-8",
+      "quality": "m6",
+      "name": "Мінор із секстою",
+      "category": "jazz",
+      "aliases": [
+        "m6"
+      ],
+      "intervals": [
+        0,
+        3,
+        7,
+        9
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-9",
+      "quality": "6/9",
+      "name": "Мажор із секстою та ноною",
+      "category": "jazz",
+      "aliases": [
+        "69",
+        "6/9",
+        "6add9"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        9,
+        2
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-10",
+      "quality": "9",
+      "name": "Домінантовий нонакорд",
+      "category": "jazz",
+      "aliases": [
+        "9"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        10,
+        2
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-11",
+      "quality": "maj9",
+      "name": "Мажорний нонакорд",
+      "category": "jazz",
+      "aliases": [
+        "maj9",
+        "M9",
+        "Δ9"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        11,
+        2
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-12",
+      "quality": "m9",
+      "name": "Мінорний нонакорд",
+      "category": "jazz",
+      "aliases": [
+        "m9",
+        "min9"
+      ],
+      "intervals": [
+        0,
+        3,
+        7,
+        10,
+        2
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-13",
+      "quality": "m11",
+      "name": "Мінорний ундецимакорд",
+      "category": "jazz",
+      "aliases": [
+        "m11"
+      ],
+      "intervals": [
+        0,
+        3,
+        7,
+        10,
+        2,
+        5
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-14",
+      "quality": "13",
+      "name": "Домінантовий терцдецимакорд",
+      "category": "jazz",
+      "aliases": [
+        "13"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        10,
+        2,
+        9
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-15",
+      "quality": "dim",
+      "name": "Зменшений тризвук",
+      "category": "jazz",
+      "aliases": [
+        "dim",
+        "°"
+      ],
+      "intervals": [
+        0,
+        3,
+        6
+      ],
+      "optionalIntervals": []
+    },
+    {
+      "_id": "seed-type-16",
+      "quality": "dim7",
+      "name": "Зменшений септакорд",
+      "category": "jazz",
+      "aliases": [
+        "dim7",
+        "°7"
+      ],
+      "intervals": [
+        0,
+        3,
+        6,
+        9
+      ],
+      "optionalIntervals": []
+    },
+    {
+      "_id": "seed-type-17",
+      "quality": "aug",
+      "name": "Збільшений тризвук",
+      "category": "jazz",
+      "aliases": [
+        "aug",
+        "+"
+      ],
+      "intervals": [
+        0,
+        4,
+        8
+      ],
+      "optionalIntervals": []
+    },
+    {
+      "_id": "seed-type-18",
+      "quality": "7b9",
+      "name": "Домінантсептакорд із малою ноною",
+      "category": "jazz",
+      "aliases": [
+        "7b9"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        10,
+        1
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-19",
+      "quality": "7#9",
+      "name": "Домінантсептакорд зі збільшеною ноною",
+      "category": "jazz",
+      "aliases": [
+        "7#9"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        10,
+        3
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-20",
+      "quality": "7#5",
+      "name": "Домінантсептакорд зі збільшеною квінтою",
+      "category": "jazz",
+      "aliases": [
+        "7#5",
+        "7+"
+      ],
+      "intervals": [
+        0,
+        4,
+        8,
+        10
+      ],
+      "optionalIntervals": []
+    },
+    {
+      "_id": "seed-type-21",
+      "quality": "sus2",
+      "name": "Секунда замість терції",
+      "category": "suspended",
+      "aliases": [
+        "sus2"
+      ],
+      "intervals": [
+        0,
+        2,
+        7
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-22",
+      "quality": "sus4",
+      "name": "Кварта замість терції",
+      "category": "suspended",
+      "aliases": [
+        "sus4",
+        "sus"
+      ],
+      "intervals": [
+        0,
+        5,
+        7
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-23",
+      "quality": "7sus2",
+      "name": "Септакорд із секундою замість терції",
+      "category": "suspended",
+      "aliases": [
+        "7sus2"
+      ],
+      "intervals": [
+        0,
+        2,
+        7,
+        10
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-24",
+      "quality": "7sus4",
+      "name": "Септакорд із квартою замість терції",
+      "category": "suspended",
+      "aliases": [
+        "7sus4",
+        "7sus"
+      ],
+      "intervals": [
+        0,
+        5,
+        7,
+        10
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-25",
+      "quality": "add9",
+      "name": "Мажор із доданою ноною",
+      "category": "suspended",
+      "aliases": [
+        "add9"
+      ],
+      "intervals": [
+        0,
+        4,
+        7,
+        2
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    },
+    {
+      "_id": "seed-type-26",
+      "quality": "madd9",
+      "name": "Мінор із доданою ноною",
+      "category": "suspended",
+      "aliases": [
+        "madd9",
+        "minadd9"
+      ],
+      "intervals": [
+        0,
+        3,
+        7,
+        2
+      ],
+      "optionalIntervals": [
+        7
+      ]
+    }
+  ],
+  "voicings": [
+    {
+      "_id": "seed-voicing-0",
+      "chordId": "seed-type-3",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        0,
+        1,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-1",
+      "chordId": "seed-type-3",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        0,
+        2,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-2",
+      "chordId": "seed-type-0",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        2,
+        1,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-3",
+      "chordId": "seed-type-0",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        2,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-4",
+      "chordId": "seed-type-1",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-5",
+      "chordId": "seed-type-1",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-6",
+      "chordId": "seed-type-4",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-7",
+      "chordId": "seed-type-4",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        1,
+        2,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-8",
+      "chordId": "seed-type-5",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-9",
+      "chordId": "seed-type-5",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        0,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-10",
+      "chordId": "seed-type-6",
+      "root": 4,
+      "frets": [
+        0,
+        1,
+        0,
+        0,
+        3,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-11",
+      "chordId": "seed-type-6",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        1,
+        0,
+        1,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-12",
+      "chordId": "seed-type-22",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        2,
+        2,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-13",
+      "chordId": "seed-type-22",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        3,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-14",
+      "chordId": "seed-type-0",
+      "root": 5,
+      "frets": [
+        -1,
+        -1,
+        3,
+        2,
+        1,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-15",
+      "chordId": "seed-type-0",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-16",
+      "chordId": "seed-type-0",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        3,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-17",
+      "chordId": "seed-type-1",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        3,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-18",
+      "chordId": "seed-type-0",
+      "root": 7,
+      "frets": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-19",
+      "chordId": "seed-type-4",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        0,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-20",
+      "chordId": "seed-type-4",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        2,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-21",
+      "chordId": "seed-type-3",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        1,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-22",
+      "chordId": "seed-type-3",
+      "root": 7,
+      "frets": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-23",
+      "chordId": "seed-type-5",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        1,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-24",
+      "chordId": "seed-type-22",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        3,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-25",
+      "chordId": "seed-type-0",
+      "root": 5,
+      "frets": [
+        -1,
+        -1,
+        3,
+        5,
+        6,
+        5
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": false,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-26",
+      "chordId": "seed-type-2",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        2,
+        -1,
+        -1,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-27",
+      "chordId": "seed-type-2",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        -1,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-28",
+      "chordId": "seed-type-2",
+      "root": 5,
+      "frets": [
+        -1,
+        -1,
+        3,
+        5,
+        6,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-29",
+      "chordId": "seed-type-7",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        2,
+        1,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-30",
+      "chordId": "seed-type-7",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        2,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-31",
+      "chordId": "seed-type-10",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        3,
+        3,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-32",
+      "chordId": "seed-type-10",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        0,
+        1,
+        0,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-33",
+      "chordId": "seed-type-14",
+      "root": 7,
+      "frets": [
+        3,
+        -1,
+        3,
+        4,
+        5,
+        5
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [
+        7
+      ],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-34",
+      "chordId": "seed-type-0",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        3,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-35",
+      "chordId": "seed-type-0",
+      "root": 0,
+      "frets": [
+        -1,
+        -1,
+        -1,
+        5,
+        5,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-36",
+      "chordId": "seed-type-1",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        3,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-37",
+      "chordId": "seed-type-8",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        1,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-38",
+      "chordId": "seed-type-9",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        2,
+        3,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-39",
+      "chordId": "seed-type-11",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        4,
+        3,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-40",
+      "chordId": "seed-type-11",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        4,
+        3,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [
+        7
+      ],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-41",
+      "chordId": "seed-type-12",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        5,
+        5,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-42",
+      "chordId": "seed-type-12",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        1,
+        3,
+        3,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [
+        7
+      ],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-43",
+      "chordId": "seed-type-25",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        0,
+        3,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-44",
+      "chordId": "seed-type-26",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        4,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-45",
+      "chordId": "seed-type-21",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        2,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-46",
+      "chordId": "seed-type-21",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        2,
+        3,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-47",
+      "chordId": "seed-type-24",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        0,
+        3,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-48",
+      "chordId": "seed-type-23",
+      "root": 9,
+      "frets": [
+        -1,
+        0,
+        2,
+        0,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-49",
+      "chordId": "seed-type-15",
+      "root": 11,
+      "frets": [
+        -1,
+        2,
+        3,
+        4,
+        3,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-50",
+      "chordId": "seed-type-16",
+      "root": 11,
+      "frets": [
+        -1,
+        2,
+        3,
+        1,
+        3,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-51",
+      "chordId": "seed-type-16",
+      "root": 2,
+      "frets": [
+        -1,
+        -1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-52",
+      "chordId": "seed-type-17",
+      "root": 0,
+      "frets": [
+        -1,
+        3,
+        2,
+        1,
+        1,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-53",
+      "chordId": "seed-type-18",
+      "root": 4,
+      "frets": [
+        0,
+        2,
+        0,
+        1,
+        0,
+        1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-54",
+      "chordId": "seed-type-19",
+      "root": 4,
+      "frets": [
+        -1,
+        7,
+        6,
+        7,
+        8,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [
+        7
+      ],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-55",
+      "chordId": "seed-type-20",
+      "root": 7,
+      "frets": [
+        3,
+        -1,
+        3,
+        4,
+        4,
+        -1
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-56",
+      "chordId": "seed-type-13",
+      "root": 2,
+      "frets": [
+        -1,
+        5,
+        3,
+        5,
+        5,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": null,
+      "movable": true,
+      "octaveVariants": true,
+      "omittedIntervals": [
+        7
+      ],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-57",
+      "chordId": "seed-type-0",
+      "root": 2,
+      "frets": [
+        2,
+        -1,
+        0,
+        2,
+        3,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 6,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-58",
+      "chordId": "seed-type-0",
+      "root": 0,
+      "frets": [
+        0,
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 4,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-59",
+      "chordId": "seed-type-0",
+      "root": 7,
+      "frets": [
+        -1,
+        2,
+        0,
+        0,
+        0,
+        3
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 11,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-60",
+      "chordId": "seed-type-0",
+      "root": 0,
+      "frets": [
+        3,
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 7,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-61",
+      "chordId": "seed-type-0",
+      "root": 2,
+      "frets": [
+        -1,
+        0,
+        0,
+        2,
+        3,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 9,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-62",
+      "chordId": "seed-type-1",
+      "root": 9,
+      "frets": [
+        3,
+        0,
+        2,
+        2,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 7,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-63",
+      "chordId": "seed-type-1",
+      "root": 9,
+      "frets": [
+        -1,
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 0,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-64",
+      "chordId": "seed-type-1",
+      "root": 9,
+      "frets": [
+        0,
+        0,
+        2,
+        2,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 4,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-65",
+      "chordId": "seed-type-0",
+      "root": 0,
+      "frets": [
+        -1,
+        2,
+        2,
+        0,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 11,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-66",
+      "chordId": "seed-type-4",
+      "root": 0,
+      "frets": [
+        0,
+        3,
+        2,
+        0,
+        0,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 4,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-67",
+      "chordId": "seed-type-5",
+      "root": 9,
+      "frets": [
+        3,
+        0,
+        2,
+        0,
+        1,
+        0
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 7,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    },
+    {
+      "_id": "seed-voicing-68",
+      "chordId": "seed-type-3",
+      "root": 2,
+      "frets": [
+        2,
+        -1,
+        0,
+        2,
+        1,
+        2
+      ],
+      "fingers": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "barres": [],
+      "bass": 6,
+      "movable": true,
+      "octaveVariants": false,
+      "omittedIntervals": [],
+      "version": 1
+    }
+  ]
+}

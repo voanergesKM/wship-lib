@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getGuitarVoicings } from "../app/utils/guitarChords";
+import { getGuitarVoicings as resolveVoicings } from "../app/utils/guitarChords";
 import { transposeContent } from "../app/utils/chordTransposition";
+
+import seed from "../scripts/chord-catalog.seed.json";
+import type { ChordCatalogData } from "../app/types/chords";
+import { definitionSchema, voicingSchema } from "../app/lib/chords/validation";
+const catalog: ChordCatalogData = {
+  chords: seed.chords.map(({ _id, ...entry }) => ({ _id, ...definitionSchema.parse(entry) })),
+  voicings: seed.voicings.map(({ _id, chordId, version, ...entry }) => ({ _id, chordId, version, ...voicingSchema.parse(entry) })),
+};
+const getGuitarVoicings = (name: string) => resolveVoicings(name, catalog);
 
 const roots = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const tuning = [4, 9, 2, 7, 11, 4];
