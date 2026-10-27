@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { requireAdminPage } from "@/lib/admin/access";
 import { getAdminUsers } from "@/lib/admin/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { AdminPagination } from "../_components/AdminPagination";
-import { adminDate } from "../_components/AdminDate";
+import { UsersTable } from "../_components/UsersTable";
+import { userTableSorting } from "@/lib/admin/tableSorting";
 export default async function Page({
   searchParams,
 }: {
@@ -14,6 +14,8 @@ export default async function Page({
     status?: string;
     profile?: string;
     page?: string;
+    sort?: string;
+    direction?: string;
   }>;
 }) {
   await requireAdminPage("users.read");
@@ -25,6 +27,10 @@ export default async function Page({
         Користувачі <span className="text-muted-foreground">({total})</span>
       </h1>
       <form className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        {search.sort && <input type="hidden" name="sort" value={search.sort} />}
+        {search.direction && (
+          <input type="hidden" name="direction" value={search.direction} />
+        )}
         <Field className="flex-1">
           <FieldLabel htmlFor="user-search">Пошук</FieldLabel>
           <Input
@@ -49,58 +55,7 @@ export default async function Page({
         </Field>
         <Button type="submit">Знайти</Button>
       </form>
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-muted">
-            <tr>
-              {[
-                "Користувач",
-                "Статус",
-                "Профіль",
-                "Групи",
-                "Останній вхід",
-              ].map((v) => (
-                <th key={v} className="p-3 font-medium">
-                  {v}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user._id} className="border-t align-top">
-                <td className="p-3">
-                  <Link
-                    className="font-medium underline underline-offset-4"
-                    href={`/admin/users/${user._id}`}
-                  >
-                    {user.firstName || user.username || "Користувач"}{" "}
-                    {user.lastName}
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    {user.username ? `@${user.username}` : user.email}
-                  </p>
-                </td>
-                <td className="p-3">
-                  {user.isActive ? "Активний" : "Заблокований"}
-                </td>
-                <td className="p-3">
-                  {user.permissionProfileName || user.permissionProfileId}
-                </td>
-                <td className="p-3">
-                  {user.groups.map((g) => g.name).join(", ") || "—"}
-                </td>
-                <td className="p-3 whitespace-nowrap">
-                  {adminDate(user.lastLoginAt)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {users.length === 0 && (
-        <p className="text-muted-foreground">Користувачів не знайдено.</p>
-      )}
+      <UsersTable users={users} sorting={userTableSorting(search).sorting} />
       <AdminPagination
         path="/admin/users"
         page={page}

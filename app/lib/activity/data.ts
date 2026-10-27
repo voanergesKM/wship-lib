@@ -7,7 +7,12 @@ import { PermissionProfile } from "@/models/PermissionProfile";
 import { Group } from "@/models/Group";
 import { requireAdminPermission } from "@/lib/admin/access";
 import { activitySearchSchema, activityDateRange } from "./filters";
-import type { ActivityAction, ActivityTarget } from "./catalog";
+import {
+  ACTIVITY_ACTIONS,
+  type ActivityAction,
+  type ActivityTarget,
+} from "./catalog";
+import { activityTableSorting } from "../admin/tableSorting";
 
 export interface ActivityRow {
   _id: string;
@@ -23,6 +28,9 @@ export interface ActivityRow {
   groupId: { _id: string; name: string } | null;
   targetId: string;
   targetLabel?: string;
+  targetHref?: string;
+  contextHref?: string;
+  actionLabel?: string;
   targetKind: ActivityTarget;
   contextLabel?: string;
   payload: { slug?: string; listId?: string; songId?: string };
@@ -35,6 +43,8 @@ export type ActivitySearch = {
   from?: string;
   to?: string;
   page?: string;
+  sort?: string;
+  direction?: string;
 };
 const isId = (value: string) => /^[a-f0-9]{24}$/i.test(value);
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -45,7 +55,7 @@ async function enrichLabels(events: ActivityRow[]) {
   ];
   const songIds = uniqueIds(
     events.flatMap((e) => [
-      e.targetKind === "song" && !e.targetLabel ? e.targetId : undefined,
+      e.targetKind === "song" ? e.targetId : undefined,
       e.payload.songId,
     ]),
   );
@@ -70,7 +80,7 @@ async function enrichLabels(events: ActivityRow[]) {
   const [songs, users, lists, profiles] = await Promise.all([
     songIds.length
       ? Song.find({ _id: { $in: songIds } })
-          .select("title")
+          .select("title slug")
           .lean()
       : [],
     userIds.length
@@ -90,10 +100,18 @@ async function enrichLabels(events: ActivityRow[]) {
       : [],
   ]);
   const songNames = new Map(
-    (songs as { _id: unknown; title: string }[]).map((s) => [
+    (songs as { _id: unknown; title: string; slug?: string }[]).map((s) => [
       String(s._id),
       s.title,
     ]),
+  );
+  const songHrefs = new Map(
+    (songs as { _id: unknown; slug?: string }[])
+      .filter((song) => !!song.slug)
+      .map((song) => [
+        String(song._id),
+        `/songs/${encodeURIComponent(song.slug!)}`,
+      ]),
   );
   const userNames = new Map(
     (users as { _id: unknown; firstName?: string; username?: string }[]).map(
@@ -109,6 +127,15 @@ async function enrichLabels(events: ActivityRow[]) {
   const profileNames = new Map(profiles.map((p) => [p._id, p.name]));
   return events.map((event) => ({
     ...event,
+    actionLabel: ACTIVITY_ACTIONS[event.action]?.label || event.action,
+    targetHref:
+      event.targetKind === "song" && event.action !== "song.deleted"
+        ? songHrefs.get(event.targetId)
+        : undefined,
+    contextHref:
+      !event.payload.listId && event.payload.songId
+        ? songHrefs.get(event.payload.songId)
+        : undefined,
     targetLabel:
       event.targetLabel ||
       (event.targetKind === "song"
@@ -187,7 +214,7 @@ export async function getActivityEvents(raw: ActivitySearch) {
       )
       .populate("actorId", "firstName lastName username")
       .populate("groupId", "name")
-      .sort({ occurredAt: -1, _id: -1 })
+      .sort(activityTableSorting(search).mongo)
       .skip((search.page - 1) * 50)
       .limit(50)
       .lean(),

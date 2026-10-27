@@ -27,3 +27,11 @@ Only `song.view` records get `expiresAt` (90 days after recording). MongoDB TTL 
 `/admin/activity` is server-rendered under `admin.access` plus `activity.read`, with stable pagination, filters by username/ID, group name/ID, action, source and inclusive Kyiv calendar dates (including DST). User/group cards link to scoped activity. Further user/group navigation links are shown only with their respective read permissions. Deleted targets keep stored IDs/optional names, not live document snapshots. The journal intentionally distinguishes browser-reported events from server actions.
 
 Run `npm run test:activity`, `npm run test:permissions`, `npm run test:groups`, and `npm run test:chords`. Isolated tests use dependency mocks and do not prove real MongoDB unique-index/transaction semantics. On a disposable replica set, also verify concurrent duplicate view submissions, minute quotas, rollback after failed journal writes, forbidden group contexts, TTL index settings, and access revocation. Verify visible/hidden tab behavior and navigation in a browser before production.
+
+## Tables and resource links
+
+The users and activity tables use TanStack Table v9 with a shared renderer and separate column definitions. Filtering, sorting and pagination stay on the server; no client row sorting/pagination is applied to an already paginated response. Sort changes preserve the current filters and reset the page. User name/status/login/activity columns and the activity timestamp can be sorted; unsupported fields are rejected by a server-side whitelist and fall back to the original order.
+
+Song links are resolved from each event's target ID to the current song slug, including events with a stored name snapshot. A deleted/missing song stays plain text; a historical slug is never used as a fallback that could point to a different song. Song-related proposal/arrangement context can also link to the current song. Links to user/group admin pages still require their respective read permissions. Action labels are resolved on the server so the client table does not bundle the event-validation schemas.
+
+The users table displays `lastSeenAt` separately from `lastLoginAt`; missing activity remains “Немає даних”. This UI change needs no DB migration. Run `npm run test:admin-tables` for actual TanStack rendering, server ordering and pagination regression checks.

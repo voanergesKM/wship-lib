@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { can } from "@/lib/permissions/catalog";
+import { activityTableSorting } from "@/lib/admin/tableSorting";
 import { requireAdminPage } from "@/lib/admin/access";
 import { getActivityEvents, type ActivitySearch } from "@/lib/activity/data";
 import { ACTIVITY_ACTIONS, ACTIVITY_KEYS } from "@/lib/activity/catalog";
@@ -20,6 +22,10 @@ export default async function Page({
     <section className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Журнал активності ({total})</h1>
       <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {search.sort && <input type="hidden" name="sort" value={search.sort} />}
+        {search.direction && (
+          <input type="hidden" name="direction" value={search.direction} />
+        )}
         <Field>
           <FieldLabel htmlFor="activity-actor">Користувач</FieldLabel>
           <Input
@@ -103,10 +109,12 @@ export default async function Page({
         Події інтерфейсу повідомляє браузер. Вони можуть бути пропущені й не
         підтверджують фактичне виконання серверної операції.
       </p>
-      <ActivityTable events={events} viewer={viewer} />
-      {!error && events.length === 0 && (
-        <p className="text-muted-foreground">Подій за цими фільтрами немає.</p>
-      )}
+      <ActivityTable
+        events={events}
+        sorting={activityTableSorting(search).sorting}
+        readUsers={can(viewer, "users.read")}
+        readGroups={can(viewer, "groups.read")}
+      />
       <AdminPagination
         path="/admin/activity"
         page={page}

@@ -23,6 +23,7 @@ function load(file, dependencies = {}) {
   return loaded.exports;
 }
 const catalog = load("app/lib/activity/catalog.ts");
+const tableSorting = load("app/lib/admin/tableSorting.ts");
 const filters = load("app/lib/activity/filters.ts", { "./catalog": catalog });
 const actorId = "111111111111111111111111";
 const groupId = "222222222222222222222222";
@@ -380,6 +381,8 @@ test("activity reads enforce permissions before querying records", async () => {
     "@/models/SongList": {},
     "@/models/PermissionProfile": {},
     "./filters": filters,
+    "./catalog": catalog,
+    "../admin/tableSorting": tableSorting,
     "@/lib/admin/access": {
       requireAdminPermission: async (permission) => {
         assert.equal(permission, "activity.read");
@@ -403,6 +406,8 @@ test("invalid journal filters return a useful error without a DB read", async ()
     "@/models/SongList": {},
     "@/models/PermissionProfile": {},
     "./filters": filters,
+    "./catalog": catalog,
+    "../admin/tableSorting": tableSorting,
     "@/lib/admin/access": { requireAdminPermission: async () => {} },
   });
   assert.ok((await data.getActivityEvents({ action: "invalid" })).error);
@@ -574,6 +579,7 @@ test("browsers without randomUUID skip telemetry rather than breaking the viewer
 });
 
 test("journal rows resolve human-readable object/context names in batches and preserve snapshots", async () => {
+  let mongoSort;
   const query = (value) => ({
     select() {
       return this;
@@ -581,7 +587,8 @@ test("journal rows resolve human-readable object/context names in batches and pr
     populate() {
       return this;
     },
-    sort() {
+    sort(value) {
+      mongoSort = value;
       return this;
     },
     skip() {
@@ -597,7 +604,7 @@ test("journal rows resolve human-readable object/context names in batches and pr
       _id: "event1",
       targetKind: "song",
       targetId: songId,
-      payload: { listId },
+      payload: { listId, slug: "old-slug" },
     },
     {
       _id: "event2",
@@ -607,10 +614,32 @@ test("journal rows resolve human-readable object/context names in batches and pr
       payload: {},
     },
     { _id: "event3", targetKind: "user", targetId: actorId, payload: {} },
+    {
+      _id: "event4",
+      targetKind: "song",
+      targetId: "555555555555555555555555",
+      targetLabel: "Видалена пісня",
+      payload: { slug: "reused-slug" },
+    },
+    {
+      _id: "event5",
+      targetKind: "song",
+      action: "song.deleted",
+      targetId: songId,
+      payload: {},
+    },
+    {
+      _id: "event6",
+      targetKind: "proposal",
+      targetId: "proposal",
+      payload: { songId },
+    },
   ];
   const data = load("app/lib/activity/data.ts", {
     "server-only": {},
     "./filters": filters,
+    "./catalog": catalog,
+    "../admin/tableSorting": tableSorting,
     "@/lib/admin/access": { requireAdminPermission: async () => {} },
     "@/models/ActivityEvent": {
       ActivityEvent: {
@@ -622,7 +651,10 @@ test("journal rows resolve human-readable object/context names in batches and pr
       User: { find: () => query([{ _id: actorId, firstName: "Іван" }]) },
     },
     "@/models/Song": {
-      Song: { find: () => query([{ _id: songId, title: "Поточна назва" }]) },
+      Song: {
+        find: () =>
+          query([{ _id: songId, title: "Поточна назва", slug: "new-slug" }]),
+      },
     },
     "@/models/SongList": {
       SongList: { find: () => query([{ _id: listId, name: "Неділя" }]) },
@@ -635,4 +667,12 @@ test("journal rows resolve human-readable object/context names in batches and pr
   assert.equal(result.events[0].contextLabel, "Список: Неділя");
   assert.equal(result.events[1].targetLabel, "Стара назва");
   assert.equal(result.events[2].targetLabel, "Іван");
+  assert.equal(result.events[0].targetHref, "/songs/new-slug");
+  assert.equal(result.events[1].targetHref, "/songs/new-slug");
+  assert.equal(result.events[3].targetHref, undefined);
+  assert.equal(result.events[4].targetHref, undefined);
+  assert.equal(result.events[5].contextHref, "/songs/new-slug");
+  assert.deepEqual(mongoSort, { occurredAt: -1, _id: -1 });
+  await data.getActivityEvents({ sort: "occurredAt", direction: "asc" });
+  assert.deepEqual(mongoSort, { occurredAt: 1, _id: -1 });
 });

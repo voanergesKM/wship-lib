@@ -7,6 +7,8 @@ const optional = <T extends z.ZodType>(schema: T) =>
   );
 export const activitySearchSchema = z
   .object({
+    sort: optional(z.string().max(30)),
+    direction: optional(z.enum(["asc", "desc"])),
     actor: optional(z.string().trim().max(100)),
     group: optional(z.string().trim().max(100)),
     action: optional(z.enum(ACTIVITY_KEYS)),

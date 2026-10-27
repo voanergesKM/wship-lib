@@ -9,6 +9,7 @@ import {
   type SystemPermission,
 } from "@/lib/permissions/catalog";
 import { requireAdminPermission } from "./access";
+import { userTableSorting } from "./tableSorting";
 import { AdminError } from "./errors";
 
 export interface AdminProfile {
@@ -61,6 +62,8 @@ export async function getAdminUsers(search: {
   page?: string;
   status?: string;
   profile?: string;
+  sort?: string;
+  direction?: string;
 }) {
   await requireAdminPermission("users.read");
   const q = (search.q || "")
@@ -88,7 +91,7 @@ export async function getAdminUsers(search: {
   const [documents, total] = await Promise.all([
     User.find(filter)
       .select(fields)
-      .sort({ createdAt: -1, _id: -1 })
+      .sort(userTableSorting(search).mongo)
       .skip((page - 1) * limit)
       .limit(limit)
       .lean(),

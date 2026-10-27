@@ -13,12 +13,14 @@
     "migrate:permissions": "node scripts/migrate-permissions.mjs",
     "test:permissions": "node --test tests/permissions*.test.mjs",
     "migrate:activity": "node scripts/migrate-activity.mjs",
-    "test:activity": "node --test tests/activity*.test.mjs"
+    "test:activity": "node --test tests/activity*.test.mjs",
+    "test:admin-tables": "node --test tests/adminTables.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-form": "^1.33.0",
     "@tanstack/react-form-nextjs": "^1.33.0",
     "@tanstack/react-query": "^5.101.0",
+    "@tanstack/react-table": "^9.3.1",
     "@telegram-apps/sdk-react": "^3.3.9",
     "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
