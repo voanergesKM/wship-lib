@@ -19,7 +19,7 @@ Do not delete the legacy `role` field yet: it remains in API responses for compa
 
 The server rechecks permissions on every read/write. Administrative writes recheck the actor inside a transaction. Access changes lock the root profile document before counting active superadmins, so concurrent demotions/disabling cannot remove the last active root account. Ordinary admins cannot modify root accounts. The change and its administrative history entry commit together in `adminaudits`. No user session/token or password is copied to this history.
 
-Both browser login endpoints reject inactive accounts before issuing cookies. `lastLoginAt` starts being recorded after deployment; it is not reconstructed from `updatedAt`. `lastSeenAt` currently records successful login only: page views, online presence, a public action catalog and a browsable activity timeline are a subsequent phase. Old dates are displayed as “Немає даних”.
+Both browser login endpoints reject inactive accounts before issuing cookies. `lastLoginAt` starts being recorded after deployment; it is not reconstructed from `updatedAt`. `lastSeenAt` now also follows successfully recorded activity, with at most one update per minute. It is not an online-presence heartbeat. The activity catalog and `/admin/activity` are described in `scripts/ACTIVITY_EVENTS.md`; `activity.read` must be explicitly granted to non-root profiles. Old dates are displayed as “Немає даних”.
 
 ## Validation
 

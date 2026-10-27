@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
@@ -6,7 +7,7 @@ import { User } from "@/models/User";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   await connectDB();
   try {
@@ -20,12 +21,15 @@ export async function POST(
     if (!type || !value || !role) {
       return NextResponse.json(
         { message: "Тип, значення та роль обов'язкові" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!["telegram", "email"].includes(type)) {
-      return NextResponse.json({ message: "Недійсний тип запрошення" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Недійсний тип запрошення" },
+        { status: 400 },
+      );
     }
 
     if (!["admin", "member"].includes(role)) {
@@ -34,17 +38,23 @@ export async function POST(
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return NextResponse.json({ message: "Групу не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Групу не знайдено" },
+        { status: 404 },
+      );
     }
 
     // Check if current user is owner or admin of the group
     const currentUserMember = group.members.find(
-      (m: any) => m.userId.toString() === session.user.id
+      (m: any) => m.userId.toString() === session.user.id,
     );
-    if (!currentUserMember || !["owner", "admin"].includes(currentUserMember.role)) {
+    if (
+      !currentUserMember ||
+      !["owner", "admin"].includes(currentUserMember.role)
+    ) {
       return NextResponse.json(
         { message: "У вас немає дозволу на надсилання запрошень у цій групі" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -54,19 +64,21 @@ export async function POST(
     let existingUser = null;
     if (type === "telegram") {
       const tgUsername = normalizedValue.replace(/^@/, "");
-      existingUser = await User.findOne({ username: { $regex: new RegExp(`^${tgUsername}$`, "i") } });
+      existingUser = await User.findOne({
+        username: { $regex: new RegExp(`^${tgUsername}$`, "i") },
+      });
     } else {
       existingUser = await User.findOne({ email: normalizedValue });
     }
 
     if (existingUser) {
       const isAlreadyMember = group.members.some(
-        (m: any) => m.userId.toString() === existingUser._id.toString()
+        (m: any) => m.userId.toString() === existingUser._id.toString(),
       );
       if (isAlreadyMember) {
         return NextResponse.json(
           { message: "Цей користувач вже є учасником групи" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -82,22 +94,36 @@ export async function POST(
     if (isAlreadyInvited) {
       return NextResponse.json(
         { message: "Цого користувача вже запрошено" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Add invitation
     group.invitations.push({
       type,
-      value: type === "telegram" && !normalizedValue.startsWith("@") ? `@${normalizedValue}` : normalizedValue,
+      value:
+        type === "telegram" && !normalizedValue.startsWith("@")
+          ? `@${normalizedValue}`
+          : normalizedValue,
       role,
       invitedBy: session.user.id,
       createdAt: new Date(),
     });
 
     await group.save();
+    await recordActivitySafely({
+      action: "group.invitation.sent",
+      actorId: session.user.id,
+      targetId: String(groupId),
+      targetLabel: String(group.name).slice(0, 200),
+      groupId: String(groupId),
+      payload: {},
+    });
 
-    return NextResponse.json({ success: true, message: "Запрошення надіслано" });
+    return NextResponse.json({
+      success: true,
+      message: "Запрошення надіслано",
+    });
   } catch (error) {
     console.error("Error creating invitation:", error);
     return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
@@ -106,7 +132,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   await connectDB();
   try {
@@ -120,23 +146,33 @@ export async function DELETE(
     if (!type || !value) {
       return NextResponse.json(
         { message: "Тип та значення запрошення обов'язкові" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return NextResponse.json({ message: "Групу не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Групу не знайдено" },
+        { status: 404 },
+      );
     }
 
     // Check permissions
     const currentUserMember = group.members.find(
-      (m: any) => m.userId.toString() === session.user.id
+      (m: any) => m.userId.toString() === session.user.id,
     );
-    if (!currentUserMember || !["owner", "admin"].includes(currentUserMember.role)) {
-      return NextResponse.json({ message: "У вас немає дозволу на скасування запрошень" }, { status: 403 });
+    if (
+      !currentUserMember ||
+      !["owner", "admin"].includes(currentUserMember.role)
+    ) {
+      return NextResponse.json(
+        { message: "У вас немає дозволу на скасування запрошень" },
+        { status: 403 },
+      );
     }
 
+    const previousInvitationCount = group.invitations.length;
     const valToCompare = value.trim().toLowerCase();
 
     group.invitations = group.invitations.filter((inv: any) => {
@@ -145,7 +181,20 @@ export async function DELETE(
     });
 
     await group.save();
-    return NextResponse.json({ success: true, message: "Запрошення скасовано" });
+    if (group.invitations.length < previousInvitationCount) {
+      await recordActivitySafely({
+        action: "group.invitation.cancelled",
+        actorId: session.user.id,
+        targetId: String(groupId),
+        targetLabel: String(group.name).slice(0, 200),
+        groupId: String(groupId),
+        payload: {},
+      });
+    }
+    return NextResponse.json({
+      success: true,
+      message: "Запрошення скасовано",
+    });
   } catch (error) {
     console.error("Error deleting invitation:", error);
     return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });

@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
@@ -31,7 +32,10 @@ export async function POST(request: NextRequest) {
 
     const { name } = await request.json();
     if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json({ message: "Назва групи обов'язкова" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Назва групи обов'язкова" },
+        { status: 400 },
+      );
     }
 
     const group = await Group.create({
@@ -45,6 +49,14 @@ export async function POST(request: NextRequest) {
       ],
     });
 
+    await recordActivitySafely({
+      action: "group.created",
+      actorId: session.user.id,
+      targetId: String(group._id),
+      targetLabel: String(group.name).slice(0, 200),
+      groupId: String(group._id),
+      payload: {},
+    });
     return NextResponse.json(group, { status: 201 });
   } catch (error) {
     console.error("Error creating group:", error);

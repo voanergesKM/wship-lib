@@ -20,6 +20,14 @@ export default async function Page({
   return (
     <section className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">{group.name}</h1>
+      {can(actor, "activity.read") && (
+        <Link
+          className="text-sm underline underline-offset-4"
+          href={`/admin/activity?group=${group._id}`}
+        >
+          Переглянути активність групи
+        </Link>
+      )}
       <p className="text-sm text-muted-foreground">
         Створено: {adminDate(group.createdAt)}
       </p>

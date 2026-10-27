@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
@@ -13,12 +14,18 @@ export async function POST(request: NextRequest) {
 
     const { groupId } = await request.json();
     if (!groupId) {
-      return NextResponse.json({ message: "ID групи обов'язковий" }, { status: 400 });
+      return NextResponse.json(
+        { message: "ID групи обов'язковий" },
+        { status: 400 },
+      );
     }
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return NextResponse.json({ message: "Групу не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Групу не знайдено" },
+        { status: 404 },
+      );
     }
 
     const { username, email } = session.user;
@@ -37,15 +44,29 @@ export async function POST(request: NextRequest) {
     });
 
     if (inviteIndex === -1) {
-      return NextResponse.json({ message: "Запрошення не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Запрошення не знайдено" },
+        { status: 404 },
+      );
     }
 
     // Remove invitation
     group.invitations.splice(inviteIndex, 1);
 
     await group.save();
+    await recordActivitySafely({
+      action: "group.invitation.rejected",
+      actorId: session.user.id,
+      targetId: String(groupId),
+      targetLabel: String(group.name).slice(0, 200),
+      groupId: String(groupId),
+      payload: {},
+    });
 
-    return NextResponse.json({ success: true, message: "Запрошення відхилено" });
+    return NextResponse.json({
+      success: true,
+      message: "Запрошення відхилено",
+    });
   } catch (error) {
     console.error("Error rejecting invitation:", error);
     return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });

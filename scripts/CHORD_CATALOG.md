@@ -55,3 +55,7 @@ The key/capo settings popover contains the “Зручні акорди” actio
 ## Permission profiles
 
 Global role checks now use `chords.manage` (direct writes) and `chords.proposals.review` (list/review all proposals). These are independent; authors can still submit and cancel their own pending proposals. A valid system superadmin has all permissions. Group roles are unrelated. Run the permission-profile migration described in `scripts/PERMISSION_PROFILES.md` before deploying this version. Legacy unassigned `admin` users retain both permissions during transition; an explicitly assigned missing profile fails closed. No chord data migration is required.
+
+## Activity events
+
+Chord proposal submission emits `chord.proposal.submitted`. Direct saves emit `chord.changed`; approve/reject/cancel emit the corresponding `chord.proposal.*` action. Transactional chord changes and their activity entry commit together, and the generated chord ID is recorded on approval/direct creation. No submitted fret/finger data or review comments are copied into the general journal. Prepare activity indexes with `npm run migrate:activity -- --apply`; see `scripts/ACTIVITY_EVENTS.md`. This does not alter musical validation or proposal permissions.

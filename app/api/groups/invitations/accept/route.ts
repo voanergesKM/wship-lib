@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
@@ -13,20 +14,29 @@ export async function POST(request: NextRequest) {
 
     const { groupId } = await request.json();
     if (!groupId) {
-      return NextResponse.json({ message: "ID групи обов'язковий" }, { status: 400 });
+      return NextResponse.json(
+        { message: "ID групи обов'язковий" },
+        { status: 400 },
+      );
     }
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return NextResponse.json({ message: "Групу не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Групу не знайдено" },
+        { status: 404 },
+      );
     }
 
     // Check if user is already a member
     const isMember = group.members.some(
-      (m: any) => m.userId.toString() === session.user.id
+      (m: any) => m.userId.toString() === session.user.id,
     );
     if (isMember) {
-      return NextResponse.json({ message: "Ви вже є членом цієї групи" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Ви вже є членом цієї групи" },
+        { status: 400 },
+      );
     }
 
     const { username, email } = session.user;
@@ -45,7 +55,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (inviteIndex === -1) {
-      return NextResponse.json({ message: "Запрошення не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Запрошення не знайдено" },
+        { status: 404 },
+      );
     }
 
     const invitation = group.invitations[inviteIndex];
@@ -60,6 +73,13 @@ export async function POST(request: NextRequest) {
     group.invitations.splice(inviteIndex, 1);
 
     await group.save();
+    await recordActivitySafely({
+      action: "group.member.joined",
+      actorId: session.user.id,
+      targetId: String(session.user.id),
+      groupId: String(groupId),
+      payload: {},
+    });
 
     return NextResponse.json({ success: true, message: "Запрошення прийнято" });
   } catch (error) {

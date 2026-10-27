@@ -11,7 +11,9 @@
     "test:groups": "node --test tests/groups*.test.mjs",
     "migrate:chords": "node scripts/migrate-chords.mjs",
     "migrate:permissions": "node scripts/migrate-permissions.mjs",
-    "test:permissions": "node --test tests/permissions*.test.mjs"
+    "test:permissions": "node --test tests/permissions*.test.mjs",
+    "migrate:activity": "node scripts/migrate-activity.mjs",
+    "test:activity": "node --test tests/activity*.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-form": "^1.33.0",

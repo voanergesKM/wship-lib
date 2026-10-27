@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
@@ -61,10 +62,13 @@ export async function POST(
       );
     }
 
-    const sanitizedItems = items.map((item: { section: string; repeat?: number }) => ({
-      section: String(item.section).trim(),
-      repeat: typeof item.repeat === "number" && item.repeat > 0 ? item.repeat : 1,
-    }));
+    const sanitizedItems = items.map(
+      (item: { section: string; repeat?: number }) => ({
+        section: String(item.section).trim(),
+        repeat:
+          typeof item.repeat === "number" && item.repeat > 0 ? item.repeat : 1,
+      }),
+    );
 
     const arrangement = await Arrangement.create({
       song: song._id,
@@ -73,6 +77,13 @@ export async function POST(
       createdBy: session.user.id,
     });
 
+    await recordActivitySafely({
+      action: "arrangement.created",
+      actorId: session.user.id,
+      targetId: String(arrangement._id),
+      targetLabel: String(arrangement.name).slice(0, 200),
+      payload: { songId: String(song._id) },
+    });
     return NextResponse.json(arrangement, { status: 201 });
   } catch (error) {
     console.error("Error creating song arrangement:", error);

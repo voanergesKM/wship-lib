@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { getSongLists, GroupReadError } from "@/lib/data/groups";
 import { NextResponse } from "next/server";
 import { chain } from "@/lib/api/composeRoute";
@@ -16,7 +17,10 @@ export const GET = chain<GroupListsRouteParams>()
       return NextResponse.json(await getSongLists(groupId, session.user.id));
     } catch (error) {
       if (error instanceof GroupReadError) {
-        return NextResponse.json({ message: error.message }, { status: error.status });
+        return NextResponse.json(
+          { message: error.message },
+          { status: error.status },
+        );
       }
       console.error("Error fetching song lists:", error);
       return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
@@ -48,6 +52,14 @@ export const POST = chain<GroupListsRouteParams>()
         updatedBy: session.user.id,
       });
 
+      await recordActivitySafely({
+        action: "playlist.created",
+        actorId: session.user.id,
+        targetId: String(list._id),
+        targetLabel: String(list.name).slice(0, 200),
+        groupId: String(groupId),
+        payload: {},
+      });
       return NextResponse.json(list, { status: 201 });
     } catch (error) {
       console.error("Error creating song list:", error);

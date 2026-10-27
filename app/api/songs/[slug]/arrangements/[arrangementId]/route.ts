@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
@@ -73,6 +74,13 @@ export async function PATCH(
     }
 
     await arrangement.save();
+    await recordActivitySafely({
+      action: "arrangement.updated",
+      actorId: session.user.id,
+      targetId: String(arrangement._id),
+      targetLabel: String(arrangement.name).slice(0, 200),
+      payload: { songId: String(arrangement.song) },
+    });
     await arrangement.populate("createdBy", "firstName lastName username");
 
     return NextResponse.json(arrangement);
@@ -127,6 +135,13 @@ export async function DELETE(
   );
 
   await Arrangement.findByIdAndDelete(arrangementId);
+  await recordActivitySafely({
+    action: "arrangement.deleted",
+    actorId: session.user.id,
+    targetId: String(arrangement._id),
+    targetLabel: String(arrangement.name).slice(0, 200),
+    payload: { songId: String(arrangement.song) },
+  });
 
   return NextResponse.json({ ok: true, message: "Структуру видалено" });
 }

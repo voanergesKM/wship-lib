@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import { getSongBySlug } from "@/lib/data/songs";
 import { connectDB } from "@/lib/db";
@@ -71,6 +72,13 @@ export async function PATCH(
     song.bpm = body.bpm || undefined;
 
     await song.save();
+    await recordActivitySafely({
+      action: "song.updated",
+      actorId: session.user.id,
+      targetId: String(song._id),
+      targetLabel: String(song.title).slice(0, 200),
+      payload: { slug: song.slug },
+    });
 
     return NextResponse.json(song);
   } catch (error) {
@@ -135,6 +143,13 @@ export async function DELETE(
 
     // 4. Delete the song itself
     await Song.deleteOne({ _id: song._id });
+    await recordActivitySafely({
+      action: "song.deleted",
+      actorId: session.user.id,
+      targetId: String(song._id),
+      targetLabel: String(song.title).slice(0, 200),
+      payload: { slug: song.slug },
+    });
 
     try {
       revalidatePath("/");

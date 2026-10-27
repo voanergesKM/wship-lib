@@ -32,6 +32,11 @@ export default async function AdminLayout({
               <Link href="/admin/groups">Групи</Link>
             </Button>
           )}
+          {can(user, "activity.read") && (
+            <Button asChild variant="outline">
+              <Link href="/admin/activity">Активність</Link>
+            </Button>
+          )}
           {can(user, "permissionProfiles.read") && (
             <Button asChild variant="outline">
               <Link href="/admin/profiles">Профілі доступу</Link>

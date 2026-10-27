@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { Song } from "@/models/Song";
@@ -58,6 +59,13 @@ export async function POST(request: NextRequest) {
       console.warn("revalidatePath error:", err);
     }
 
+    await recordActivitySafely({
+      action: "song.created",
+      actorId: session.user?.id ?? null,
+      targetId: String(result._id),
+      targetLabel: String(result.title).slice(0, 200),
+      payload: { slug: result.slug },
+    });
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Error creating song:", error);

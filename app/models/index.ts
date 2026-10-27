@@ -24,3 +24,5 @@ export { ConductorSession } from "./ConductorSession";
 
 import "./PermissionProfile";
 import "./AdminAudit";
+
+import "./ActivityEvent";

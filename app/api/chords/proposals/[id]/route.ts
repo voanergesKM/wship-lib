@@ -1,3 +1,4 @@
+import { recordActivity } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -44,8 +45,12 @@ export async function PATCH(
             "Пропозицію вже розглянуто або скасовано",
             409,
           );
+        let changedChordId: string | undefined = proposal.input.chordId;
         if (action === "approve") {
-          await applyChordChange(proposal.input, session);
+          ({ chordId: changedChordId } = await applyChordChange(
+            proposal.input,
+            session,
+          ));
         }
         proposal.status =
           action === "approve"
@@ -57,6 +62,21 @@ export async function PATCH(
         proposal.reviewedAt = new Date();
         proposal.reviewComment = comment;
         await proposal.save({ session });
+        await recordActivity(
+          {
+            action:
+              action === "approve"
+                ? "chord.proposal.approved"
+                : action === "reject"
+                  ? "chord.proposal.rejected"
+                  : "chord.proposal.cancelled",
+            actorId: user.id,
+            targetId: String(proposal._id),
+            targetLabel: String(proposal.definitionSnapshot.name).slice(0, 200),
+            payload: changedChordId ? { chordId: changedChordId } : {},
+          },
+          { session },
+        );
       });
     } finally {
       await session.endSession();

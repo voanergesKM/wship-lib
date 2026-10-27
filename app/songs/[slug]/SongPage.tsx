@@ -42,6 +42,7 @@ import {
 } from "@/utils/youtubeLinks";
 import { SongEditForm } from "../_components/SongEditForm";
 import { SongView } from "../_components/SongView";
+import { useSongViewActivity } from "@/hooks/useSongViewActivity";
 import { useAuth } from "@/components/providers/AuthContext";
 import { AddToPlaylistDialog } from "@/components/shared/AddToPlaylistDialog";
 import { groupsService } from "@/services/groups.service";
@@ -99,6 +100,8 @@ export function SongPage({ slug }: { slug: string }) {
   const proposalParam = searchParams?.get("proposal") || null;
   const conductorSessionId = searchParams?.get("conductor") || null;
   const asConductorSessionId = searchParams?.get("asConductor") || null;
+
+  useSongViewActivity({ slug: data?.slug, userId: user?.id, groupId, listId });
 
   // Follower mode
   const {

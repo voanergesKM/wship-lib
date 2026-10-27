@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextResponse } from "next/server";
 import { chain } from "@/lib/api/composeRoute";
 import { requireAuth, requireGroupAccess } from "@/lib/api/routeGuards";
@@ -35,7 +36,9 @@ export const POST = chain<ListSongsRouteParams>()
         );
       }
 
-      const exists = list.songs.some((song: SongRef) => isSameSong(song, songId));
+      const exists = list.songs.some((song: SongRef) =>
+        isSameSong(song, songId),
+      );
       if (exists) {
         return NextResponse.json(
           { message: "Пісня вже є у списку" },
@@ -52,6 +55,13 @@ export const POST = chain<ListSongsRouteParams>()
       }
       list.updatedBy = session.user.id;
       await list.save();
+      await recordActivitySafely({
+        action: "playlist.song.added",
+        actorId: session.user.id,
+        targetId: String(songId),
+        groupId: String(groupId),
+        payload: { listId },
+      });
 
       return NextResponse.json({
         success: true,
@@ -87,10 +97,13 @@ export const DELETE = chain<ListSongsRouteParams>()
       }
 
       const initialLength = list.songs.length;
-      list.songs = list.songs.filter((song: SongRef) => !isSameSong(song, songId));
+      list.songs = list.songs.filter(
+        (song: SongRef) => !isSameSong(song, songId),
+      );
       if (list.songArrangements) {
         list.songArrangements = list.songArrangements.filter(
-          (sa: { song: { toString(): string } }) => sa.song.toString() !== songId,
+          (sa: { song: { toString(): string } }) =>
+            sa.song.toString() !== songId,
         );
       }
 
@@ -103,6 +116,13 @@ export const DELETE = chain<ListSongsRouteParams>()
 
       list.updatedBy = session.user.id;
       await list.save();
+      await recordActivitySafely({
+        action: "playlist.song.removed",
+        actorId: session.user.id,
+        targetId: String(songId),
+        groupId: String(groupId),
+        payload: { listId },
+      });
 
       return NextResponse.json({
         success: true,

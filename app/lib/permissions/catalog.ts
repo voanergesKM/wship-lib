@@ -4,6 +4,7 @@ export const SYSTEM_PERMISSIONS = {
   "users.status.update": "Блокувати й розблоковувати користувачів",
   "users.permissionProfile.assign":
     "Призначати профілі доступу (лише суперадмін)",
+  "activity.read": "Переглядати журнал активності всіх користувачів і груп",
   "groups.read": "Переглядати всі групи в адмінці",
   "permissionProfiles.read": "Переглядати профілі доступу",
   "permissionProfiles.create": "Створювати профілі (лише суперадмін)",

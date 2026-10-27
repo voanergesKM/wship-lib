@@ -20,6 +20,14 @@ export default async function Page({
   const profiles = actor.isSuperadmin ? await getAdminProfiles() : [];
   return (
     <section className="flex flex-col gap-5">
+      {can(actor, "activity.read") && (
+        <Link
+          className="text-sm underline underline-offset-4"
+          href={`/admin/activity?actor=${user._id}`}
+        >
+          Переглянути активність користувача
+        </Link>
+      )}
       <div>
         <h1 className="text-2xl font-semibold">
           {user.firstName || user.username || "Користувач"} {user.lastName}
@@ -34,6 +42,7 @@ export default async function Page({
           ["Профіль", user.permissionProfileName || user.permissionProfileId],
           ["Зареєстровано", adminDate(user.createdAt)],
           ["Останній вхід", adminDate(user.lastLoginAt)],
+          ["Остання зафіксована активність", adminDate(user.lastSeenAt)],
         ].map(([key, value]) => (
           <div key={key}>
             <dt className="text-sm text-muted-foreground">{key}</dt>

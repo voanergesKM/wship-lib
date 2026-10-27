@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
@@ -105,6 +106,14 @@ export async function POST(
         visibility: body.visibility || "public",
         document: body.document,
       },
+    });
+
+    await recordActivitySafely({
+      action: "song.proposal.created",
+      actorId: session.user.id,
+      targetId: String(proposal._id),
+      targetLabel: String(song.title).slice(0, 200),
+      payload: { songId: String(song._id) },
     });
 
     // Notify in background

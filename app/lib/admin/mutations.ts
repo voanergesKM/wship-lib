@@ -9,6 +9,7 @@ import {
   SUPERADMIN_PROFILE_ID,
   type PermissionAccess,
 } from "@/lib/permissions/catalog";
+import { recordAdminAuditActivity } from "@/lib/activity/server";
 import { getUserAccess } from "@/lib/permissions/server";
 import { AdminError } from "./errors";
 import { userUpdateSchema, profileInputSchema } from "./validation";
@@ -107,7 +108,7 @@ export async function updateAdminUser(
         permissionProfileId: target.permissionProfileId ?? null,
       };
       await User.updateOne({ _id: id }, { $set: changes }, { session });
-      await AdminAudit.create(
+      const [audit] = await AdminAudit.create(
         [
           {
             actorId: actor.id,
@@ -119,6 +120,7 @@ export async function updateAdminUser(
         ],
         { session },
       );
+      await recordAdminAuditActivity(audit, session);
     });
   } finally {
     await session.endSession();
@@ -165,7 +167,7 @@ export async function saveAdminProfile(
           )
         : (await PermissionProfile.create([changes], { session }))[0];
       if (!profile) throw new AdminError("Профіль не знайдено", 404);
-      await AdminAudit.create(
+      const [audit] = await AdminAudit.create(
         [
           {
             actorId: actor.id,
@@ -177,6 +179,7 @@ export async function saveAdminProfile(
         ],
         { session },
       );
+      await recordAdminAuditActivity(audit, session);
       return profile._id;
     });
   } finally {

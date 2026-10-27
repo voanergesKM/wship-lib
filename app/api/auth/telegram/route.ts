@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
@@ -167,6 +168,12 @@ export async function PATCH(req: Request) {
       path: "/",
     });
 
+    await recordActivitySafely({
+      action: "auth.login",
+      actorId: dbUser._id.toString(),
+      targetId: String(dbUser._id.toString()),
+      payload: { method: "telegram" },
+    });
     return response;
   } catch (err: any) {
     console.error("❌ AUTH ERROR:", err.message || err);

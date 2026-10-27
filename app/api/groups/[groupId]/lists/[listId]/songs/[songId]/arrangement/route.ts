@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextResponse } from "next/server";
 import { chain } from "@/lib/api/composeRoute";
 import { requireAuth, requireGroupAccess } from "@/lib/api/routeGuards";
@@ -46,6 +47,17 @@ export const PATCH = chain<SongArrangementRouteParams>()
 
       list.updatedBy = session.user.id;
       await list.save();
+      await recordActivitySafely({
+        action: "playlist.arrangement.updated",
+        actorId: session.user.id,
+        targetId: String(listId),
+        targetLabel: String(list.name).slice(0, 200),
+        groupId: String(groupId),
+        payload: {
+          songId,
+          arrangementId: arrangementId ? String(arrangementId) : null,
+        },
+      });
 
       const updatedList = await SongList.findById(list._id)
         .populate("songs")
@@ -58,9 +70,6 @@ export const PATCH = chain<SongArrangementRouteParams>()
       });
     } catch (error) {
       console.error("Error setting song arrangement in list:", error);
-      return NextResponse.json(
-        { message: "Помилка сервера" },
-        { status: 500 },
-      );
+      return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
     }
   });

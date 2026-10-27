@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
@@ -7,7 +8,7 @@ import { getGroupDetails, GroupReadError } from "@/lib/data/groups";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   await connectDB();
   try {
@@ -22,7 +23,10 @@ export async function GET(
     return NextResponse.json(group);
   } catch (error) {
     if (error instanceof GroupReadError) {
-      return NextResponse.json({ message: error.message }, { status: error.status });
+      return NextResponse.json(
+        { message: error.message },
+        { status: error.status },
+      );
     }
     console.error("Error fetching group details:", error);
     return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
@@ -31,7 +35,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   await connectDB();
   try {
@@ -43,13 +47,19 @@ export async function DELETE(
 
     const group = await Group.findById(groupId);
     if (!group) {
-      return NextResponse.json({ message: "Групу не знайдено" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Групу не знайдено" },
+        { status: 404 },
+      );
     }
 
     // Only owner can delete the group
     const ownerMember = group.members.find((m: any) => m.role === "owner");
     if (!ownerMember || ownerMember.userId.toString() !== session.user.id) {
-      return NextResponse.json({ message: "Тільки власник може видалити групу" }, { status: 403 });
+      return NextResponse.json(
+        { message: "Тільки власник може видалити групу" },
+        { status: 403 },
+      );
     }
 
     // Delete group and all of its lists
@@ -58,7 +68,18 @@ export async function DELETE(
       SongList.deleteMany({ groupId }),
     ]);
 
-    return NextResponse.json({ success: true, message: "Групу та її списки успішно видалено" });
+    await recordActivitySafely({
+      action: "group.deleted",
+      actorId: session.user.id,
+      targetId: String(groupId),
+      targetLabel: String(group.name).slice(0, 200),
+      groupId: String(groupId),
+      payload: {},
+    });
+    return NextResponse.json({
+      success: true,
+      message: "Групу та її списки успішно видалено",
+    });
   } catch (error) {
     console.error("Error deleting group:", error);
     return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });

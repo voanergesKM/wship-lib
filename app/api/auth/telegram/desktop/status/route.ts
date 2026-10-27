@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { AuthSession } from "@/models/AuthSession";
@@ -67,6 +68,15 @@ export async function GET(req: Request) {
       // Optionally delete the session after successful auth
       await AuthSession.deleteOne({ _id: session._id });
 
+      await recordActivitySafely(
+        {
+          action: "auth.login",
+          actorId: dbUser._id.toString(),
+          targetId: String(dbUser._id.toString()),
+          payload: { method: "desktop" },
+        },
+        { eventId: `auth-desktop:${session._id.toString()}` },
+      );
       return response;
     }
 

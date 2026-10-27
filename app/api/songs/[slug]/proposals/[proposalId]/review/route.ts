@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
@@ -86,6 +87,13 @@ export async function POST(
       proposal.reviewedAt = new Date();
       proposal.reviewComment = comment?.trim() || undefined;
       await proposal.save();
+      await recordActivitySafely({
+        action: "song.proposal.approved",
+        actorId: session.user.id,
+        targetId: String(proposal._id),
+        targetLabel: String(song.title).slice(0, 200),
+        payload: { songId: String(song._id) },
+      });
 
       // Send Telegram notification
       notificationService
@@ -114,6 +122,13 @@ export async function POST(
       proposal.reviewedAt = new Date();
       proposal.reviewComment = comment?.trim() || undefined;
       await proposal.save();
+      await recordActivitySafely({
+        action: "song.proposal.rejected",
+        actorId: session.user.id,
+        targetId: String(proposal._id),
+        targetLabel: String(song.title).slice(0, 200),
+        payload: { songId: String(song._id) },
+      });
 
       // Send Telegram notification
       notificationService

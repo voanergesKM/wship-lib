@@ -1,3 +1,4 @@
+import { recordActivity, recordActivitySafely } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import mongoose from "mongoose";
 import { applyChordChange } from "@/lib/chords/applyChange";
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
       const session = await mongoose.startSession();
       try {
         const proposal = await session.withTransaction(async () => {
-          await applyChordChange(input, session);
+          const { chordId } = await applyChordChange(input, session);
           const [saved] = await ChordProposalModel.create(
             [
               {
@@ -64,6 +65,16 @@ export async function POST(request: NextRequest) {
             ],
             { session },
           );
+          await recordActivity(
+            {
+              action: "chord.changed",
+              actorId: user.id,
+              targetId: chordId,
+              targetLabel: definition.name.slice(0, 200),
+              payload: {},
+            },
+            { session },
+          );
           return saved;
         });
         return NextResponse.json(proposal, { status: 201 });
@@ -72,6 +83,13 @@ export async function POST(request: NextRequest) {
       }
     }
     const proposal = await ChordProposalModel.create(record);
+    await recordActivitySafely({
+      action: "chord.proposal.submitted",
+      actorId: user.id,
+      targetId: proposal._id,
+      targetLabel: definition.name.slice(0, 200),
+      payload: input.chordId ? { chordId: input.chordId } : {},
+    });
     return NextResponse.json(proposal, { status: 201 });
   } catch (error) {
     return chordApiError(error);

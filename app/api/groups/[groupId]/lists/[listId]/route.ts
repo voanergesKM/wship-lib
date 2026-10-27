@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { getSongListDetails, GroupReadError } from "@/lib/data/groups";
 import { NextResponse } from "next/server";
 import { chain } from "@/lib/api/composeRoute";
@@ -17,10 +18,15 @@ export const GET = chain<ListRouteParams>()
   .handler(async (_request, { params, session }) => {
     try {
       const { groupId, listId } = params;
-      return NextResponse.json(await getSongListDetails(groupId, listId, session.user.id));
+      return NextResponse.json(
+        await getSongListDetails(groupId, listId, session.user.id),
+      );
     } catch (error) {
       if (error instanceof GroupReadError) {
-        return NextResponse.json({ message: error.message }, { status: error.status });
+        return NextResponse.json(
+          { message: error.message },
+          { status: error.status },
+        );
       }
       console.error("Error fetching song list:", error);
       return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
@@ -75,6 +81,14 @@ export const PATCH = chain<ListRouteParams>()
         );
       }
 
+      await recordActivitySafely({
+        action: "playlist.updated",
+        actorId: session.user.id,
+        targetId: String(listId),
+        targetLabel: String(list.name).slice(0, 200),
+        groupId: String(groupId),
+        payload: {},
+      });
       return NextResponse.json(list);
     } catch (error) {
       console.error("Error updating song list:", error);
@@ -85,7 +99,7 @@ export const PATCH = chain<ListRouteParams>()
 export const DELETE = chain<ListRouteParams>()
   .use(requireAuth)
   .use(requireGroupAccess)
-  .handler(async (_request, { params }) => {
+  .handler(async (_request, { params, session }) => {
     try {
       const { groupId, listId } = params;
 
@@ -97,6 +111,14 @@ export const DELETE = chain<ListRouteParams>()
         );
       }
 
+      await recordActivitySafely({
+        action: "playlist.deleted",
+        actorId: session.user.id,
+        targetId: String(listId),
+        targetLabel: String(result.name).slice(0, 200),
+        groupId: String(groupId),
+        payload: {},
+      });
       return NextResponse.json({
         success: true,
         message: "Список пісень видалено",

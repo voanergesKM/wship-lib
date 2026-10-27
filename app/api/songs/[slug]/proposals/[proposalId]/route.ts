@@ -1,3 +1,4 @@
+import { recordActivitySafely } from "@/lib/activity/server";
 import { can } from "@/lib/permissions/catalog";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
@@ -85,6 +86,13 @@ export async function PATCH(
     if (body.comment !== undefined) proposal.comment = body.comment.trim();
 
     await proposal.save();
+    await recordActivitySafely({
+      action: "song.proposal.updated",
+      actorId: session.user.id,
+      targetId: String(proposal._id),
+      targetLabel: String(proposal.proposedData.title).slice(0, 200),
+      payload: { songId: String(proposal.song) },
+    });
 
     // Notify author/admins about the update
     notificationService
@@ -144,6 +152,13 @@ export async function DELETE(
   }
 
   await SongProposal.findByIdAndDelete(proposalId);
+  await recordActivitySafely({
+    action: "song.proposal.cancelled",
+    actorId: session.user.id,
+    targetId: String(proposal._id),
+    targetLabel: String(proposal.proposedData.title).slice(0, 200),
+    payload: { songId: String(proposal.song) },
+  });
 
   return NextResponse.json({ ok: true, message: "Пропозицію скасовано" });
 }

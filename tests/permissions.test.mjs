@@ -202,10 +202,16 @@ function fixture({
         create: async () => [{ _id: "new-profile" }],
       },
     },
+    "@/lib/activity/server": {
+      recordAdminAuditActivity: async (audit, session) => {
+        calls.push(["activity", audit, { session }]);
+      },
+    },
     "@/models/AdminAudit": {
       AdminAudit: {
         create: async (entries, options) => {
           calls.push(["audit", entries, options]);
+          return [{ _id: "audit", ...entries[0] }];
         },
       },
     },
