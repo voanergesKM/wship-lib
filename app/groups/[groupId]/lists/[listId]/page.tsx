@@ -7,6 +7,24 @@ import {
   songListDetailsOptions,
 } from "@/lib/queries/groupQueries";
 import { SongListPage } from "./SongListPage";
+import type { Metadata, ResolvingMetadata } from "next";
+import { getSongListShareInfo } from "@/lib/data/groupMetadata";
+import { createShareMetadata } from "@/lib/metadata";
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ groupId: string; listId: string }> },
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const { groupId, listId } = await params;
+  const list = await getSongListShareInfo(groupId, listId);
+  return createShareMetadata({
+    title: list ? `${list.name} • ${list.groupName}` : "Список пісень не знайдено",
+    description: list
+      ? `Список пісень «${list.name}» групи «${list.groupName}».`
+      : "Список пісень не знайдено.",
+    url: `/groups/${groupId}/lists/${listId}`,
+  }, parent);
+}
 
 export default async function Page({
   params,

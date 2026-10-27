@@ -172,6 +172,8 @@ async function renderPage(file, authenticated) {
     } }) },
     "@/lib/serverAuth": { getServerAuth: async () => ({ authenticated, user }) },
     "@/lib/data/groups": serverData,
+    "@/lib/data/groupMetadata": {},
+    "@/lib/metadata": {},
     "@/lib/queries/groupQueries": optionsModule.exports,
     "./GroupsPage": { GroupsPage: "GroupsPage" },
     "./GroupDetailsPage": { GroupDetailsPage: "GroupDetailsPage" },
