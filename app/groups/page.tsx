@@ -57,7 +57,11 @@ export default function GroupsPage() {
     },
   });
 
-  const { mutateAsync: acceptInvite, isPending: isAccepting } = useMutation({
+  const {
+    mutateAsync: acceptInvite,
+    isPending: isAccepting,
+    variables: acceptingGroupId,
+  } = useMutation({
     mutationFn: groupsService.acceptInvitation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] });
@@ -65,7 +69,11 @@ export default function GroupsPage() {
     },
   });
 
-  const { mutateAsync: rejectInvite, isPending: isRejecting } = useMutation({
+  const {
+    mutateAsync: rejectInvite,
+    isPending: isRejecting,
+    variables: rejectingGroupId,
+  } = useMutation({
     mutationFn: groupsService.rejectInvitation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
@@ -152,117 +160,126 @@ export default function GroupsPage() {
       </div>
 
       <div className="space-y-6">
-          {isLoadingData ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : groups && groups.length > 0 ? (
-            <div className="grid gap-4">
-              {groups.map((group) => {
-                const owner = group.members.find((m) => m.role === "owner");
-                const currentUserRole = group.members.find(
-                  (m) => m.userId?._id === user?.id
-                )?.role;
+        {isLoadingData ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : groups && groups.length > 0 ? (
+          <div className="grid gap-4">
+            {groups.map((group) => {
+              const owner = group.members.find((m) => m.role === "owner");
+              const currentUserRole = group.members.find(
+                (m) => m.userId?._id === user?.id,
+              )?.role;
 
-                return (
-                  <Link
-                    key={group._id}
-                    href={`/groups/${group._id}`}
-                    className="block group"
-                  >
-                    <div className="border rounded-xl p-5 hover:border-foreground/30 hover:bg-accent/10 transition-all flex items-center justify-between">
-                      <div className="space-y-2">
-                        <h2 className="text-xl font-bold group-hover:text-primary transition-colors">
-                          {group.name}
-                        </h2>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span>
-                            Учасників:{" "}
-                            <span className="font-semibold text-foreground">
-                              {group.members.length}
-                            </span>
+              return (
+                <Link
+                  key={group._id}
+                  href={`/groups/${group._id}`}
+                  className="block group"
+                >
+                  <div className="border rounded-xl p-5 hover:border-foreground/30 hover:bg-accent/10 transition-all flex items-center justify-between">
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-bold group-hover:text-primary transition-colors">
+                        {group.name}
+                      </h2>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>
+                          Учасників:{" "}
+                          <span className="font-semibold text-foreground">
+                            {group.members.length}
                           </span>
-                          <span>•</span>
-                          <span>
-                            Роль:{" "}
-                            <span className="font-semibold text-foreground capitalize">
-                              {currentUserRole === "owner"
-                                ? "Власник"
-                                : currentUserRole === "admin"
+                        </span>
+                        <span>•</span>
+                        <span>
+                          Роль:{" "}
+                          <span className="font-semibold text-foreground capitalize">
+                            {currentUserRole === "owner"
+                              ? "Власник"
+                              : currentUserRole === "admin"
                                 ? "Адмін"
                                 : "Учасник"}
-                            </span>
                           </span>
-                        </div>
+                        </span>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="border border-dashed rounded-xl p-8 text-center text-muted-foreground">
-              <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="font-medium text-foreground">Ви не є членом жодної групи</p>
-              <p className="text-sm mt-1">
-                Створіть групу або попросіть адміністратора вашої команди надіслати вам запрошення
-              </p>
-            </div>
-          )}
-
-          {/* Invitations Section */}
-          {!isLoadingData && invitations && invitations.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-amber-500" />
-                Запрошення ({invitations.length})
-              </h2>
-              <div className="grid gap-3">
-                {invitations.map((invite) => (
-                  <div
-                    key={invite.groupId}
-                    className="border border-amber-500/20 bg-amber-500/5 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <p className="font-bold text-base text-foreground">
-                        {invite.groupName}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Запросив:{" "}
-                        <span className="text-foreground">
-                          {invite.invitedBy?.firstName || "Адміністратор"}
-                        </span>{" "}
-                        ({invite.role === "admin" ? "Адміністратор" : "Учасник"})
-                      </p>
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none"
-                        disabled={isAccepting || isRejecting}
-                        onClick={() => acceptInvite(invite.groupId)}
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Прийняти
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:bg-destructive/10 border-destructive/20 flex-1 sm:flex-none"
-                        disabled={isAccepting || isRejecting}
-                        onClick={() => rejectInvite(invite.groupId)}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Відхилити
-                      </Button>
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                   </div>
-                ))}
-              </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="border border-dashed rounded-xl p-8 text-center text-muted-foreground">
+            <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="font-medium text-foreground">
+              Ви не є членом жодної групи
+            </p>
+            <p className="text-sm mt-1">
+              Створіть групу або попросіть адміністратора вашої команди
+              надіслати вам запрошення
+            </p>
+          </div>
+        )}
+
+        {/* Invitations Section */}
+        {!isLoadingData && invitations && invitations.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-amber-500" />
+              Запрошення ({invitations.length})
+            </h2>
+            <div className="grid gap-3">
+              {invitations.map((invite) => (
+                <div
+                  key={invite.groupId}
+                  className="border border-amber-500/20 bg-amber-500/5 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                >
+                  <div>
+                    <p className="font-bold text-base text-foreground">
+                      {invite.groupName}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Запросив:{" "}
+                      <span className="text-foreground">
+                        {invite.invitedBy?.firstName || "Адміністратор"}
+                      </span>{" "}
+                      ({invite.role === "admin" ? "Адміністратор" : "Учасник"})
+                    </p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      isLoading={
+                        isAccepting && acceptingGroupId === invite.groupId
+                      }
+                      size="sm"
+                      variant="default"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none"
+                      disabled={isAccepting || isRejecting}
+                      onClick={() => acceptInvite(invite.groupId)}
+                    >
+                      <Check data-icon="inline-start" />
+                      Прийняти
+                    </Button>
+                    <Button
+                      isLoading={
+                        isRejecting && rejectingGroupId === invite.groupId
+                      }
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:bg-destructive/10 border-destructive/20 flex-1 sm:flex-none"
+                      disabled={isAccepting || isRejecting}
+                      onClick={() => rejectInvite(invite.groupId)}
+                    >
+                      <X data-icon="inline-start" />
+                      Відхилити
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
       </div>
     </div>
   );

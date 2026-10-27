@@ -143,8 +143,7 @@ export function SongProposalReviewDialog({
       label: "Теги",
       oldVal: song.tags?.join(", ") || "—",
       newVal: pData.tags?.join(", ") || "—",
-      changed:
-        (song.tags?.join(", ") || "") !== (pData.tags?.join(", ") || ""),
+      changed: (song.tags?.join(", ") || "") !== (pData.tags?.join(", ") || ""),
     },
     {
       label: "Тональність",
@@ -160,7 +159,9 @@ export function SongProposalReviewDialog({
     },
     {
       label: "YouTube",
-      oldVal: song.youtube?.length ? `${song.youtube.length} посилання(ь)` : "—",
+      oldVal: song.youtube?.length
+        ? `${song.youtube.length} посилання(ь)`
+        : "—",
       newVal: pData.youtube?.length
         ? `${pData.youtube.length} посилання(ь)`
         : "—",
@@ -186,7 +187,8 @@ export function SongProposalReviewDialog({
             <StatusBadge status={activeProposal.status} />
           </div>
           <DialogDescription>
-            Порівняйте поточну версію пісні з запропонованою та прийміть рішення.
+            Порівняйте поточну версію пісні з запропонованою та прийміть
+            рішення.
           </DialogDescription>
         </DialogHeader>
 
@@ -262,7 +264,9 @@ export function SongProposalReviewDialog({
                 </p>
                 {activeProposal.reviewedAt && (
                   <p>
-                    {new Date(activeProposal.reviewedAt).toLocaleString("uk-UA")}
+                    {new Date(activeProposal.reviewedAt).toLocaleString(
+                      "uk-UA",
+                    )}
                   </p>
                 )}
               </div>
@@ -283,8 +287,12 @@ export function SongProposalReviewDialog({
 
           {activeProposal.reviewComment && (
             <div className="bg-destructive/10 text-destructive dark:text-red-400 rounded-lg p-3 text-sm border-l-4 border-destructive">
-              <p className="font-medium text-xs mb-1">Причина / Коментар до рішення:</p>
-              <p className="whitespace-pre-wrap">{activeProposal.reviewComment}</p>
+              <p className="font-medium text-xs mb-1">
+                Причина / Коментар до рішення:
+              </p>
+              <p className="whitespace-pre-wrap">
+                {activeProposal.reviewComment}
+              </p>
             </div>
           )}
         </div>
@@ -301,7 +309,9 @@ export function SongProposalReviewDialog({
                 <thead>
                   <tr className="bg-muted/50 border-b text-left text-muted-foreground">
                     <th className="p-2.5 font-medium w-1/4">Поле</th>
-                    <th className="p-2.5 font-medium w-3/8">Поточне значення</th>
+                    <th className="p-2.5 font-medium w-3/8">
+                      Поточне значення
+                    </th>
                     <th className="p-2.5 font-medium w-3/8">Запропоновано</th>
                   </tr>
                 </thead>
@@ -405,8 +415,9 @@ export function SongProposalReviewDialog({
                     className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={handleApprove}
                     disabled={isReviewing}
+                    isLoading={isReviewing}
                   >
-                    <Check className="size-4 mr-1" />
+                    <Check data-icon="inline-start" />
                     Так, прийняти зміни
                   </Button>
                 </div>
@@ -442,8 +453,9 @@ export function SongProposalReviewDialog({
                     size="sm"
                     onClick={handleReject}
                     disabled={isReviewing}
+                    isLoading={isReviewing}
                   >
-                    <X className="size-4 mr-1" />
+                    <X data-icon="inline-start" />
                     Підтвердити відхилення
                   </Button>
                 </div>

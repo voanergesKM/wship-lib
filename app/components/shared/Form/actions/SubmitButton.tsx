@@ -12,24 +12,18 @@ type Props = {
 export const SubmitButton = ({ label, disabled, size, className }: Props) => {
   const form = useFormContext();
 
-  const getIsDisabled = (disabledField: boolean): boolean => {
-    return disabled || disabledField;
-  };
-
   return (
-    <form.Subscribe
-      selector={(state) => [state.isSubmitting, state.canSubmit]}
-    >
+    <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit]}>
       {([isSubmitting, canSubmit]) => {
-        const isFormDisabled = isSubmitting || !canSubmit;
-        const disabled = getIsDisabled(isFormDisabled);
+        const isDisabled = disabled || !canSubmit;
 
         return (
           <Button
             type="button"
-            aria-disabled={disabled}
+            aria-disabled={isDisabled || isSubmitting}
+            isLoading={isSubmitting}
             onClick={form.handleSubmit}
-            disabled={disabled}
+            disabled={isDisabled}
             size={size}
             className={cn(className, "px-10")}
           >

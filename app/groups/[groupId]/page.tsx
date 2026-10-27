@@ -96,7 +96,11 @@ export default function GroupDetailsPage({
     },
   });
 
-  const { mutateAsync: deleteList } = useMutation({
+  const {
+    mutateAsync: deleteList,
+    isPending: isDeletingList,
+    variables: deletingListId,
+  } = useMutation({
     mutationFn: (listId: string) =>
       groupsService.deleteSongList(groupId, listId),
     onSuccess: () => {
@@ -120,7 +124,11 @@ export default function GroupDetailsPage({
     },
   });
 
-  const { mutateAsync: removeMember } = useMutation({
+  const {
+    mutateAsync: removeMember,
+    isPending: isRemovingMember,
+    variables: removingMemberId,
+  } = useMutation({
     mutationFn: (memberUserId: string) =>
       groupsService.removeMember(groupId, memberUserId),
     onSuccess: () => {
@@ -128,7 +136,11 @@ export default function GroupDetailsPage({
     },
   });
 
-  const { mutateAsync: cancelInvite } = useMutation({
+  const {
+    mutateAsync: cancelInvite,
+    isPending: isCancellingInvite,
+    variables: cancellingInvite,
+  } = useMutation({
     mutationFn: ({
       type,
       value,
@@ -222,13 +234,14 @@ export default function GroupDetailsPage({
         <div className="flex gap-2 w-full sm:w-auto">
           {isOwner ? (
             <Button
+              isLoading={isDeletingGroup}
               variant="destructive"
               size="sm"
               disabled={isDeletingGroup}
               onClick={handleDeleteGroup}
               className="w-full sm:w-auto"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
+              <Trash2 data-icon="inline-start" />
               Видалити групу
             </Button>
           ) : (
@@ -236,9 +249,11 @@ export default function GroupDetailsPage({
               variant="outline"
               size="sm"
               className="text-destructive border-destructive/20 hover:bg-destructive/10 w-full sm:w-auto"
+              disabled={isRemovingMember}
+              isLoading={isRemovingMember && removingMemberId === user?.id}
               onClick={handleLeaveGroup}
             >
-              <LogOut className="h-4 w-4 mr-1" />
+              <LogOut data-icon="inline-start" />
               Вийти з групи
             </Button>
           )}
@@ -326,9 +341,11 @@ export default function GroupDetailsPage({
                       }
                     }}
                     className="text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0"
+                    disabled={isDeletingList}
+                    isLoading={isDeletingList && deletingListId === list._id}
                     title="Видалити список"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 />
                   </Button>
                 </div>
               ))}
@@ -415,9 +432,14 @@ export default function GroupDetailsPage({
                                 }
                               }}
                               className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                              disabled={isRemovingMember}
+                              isLoading={
+                                isRemovingMember &&
+                                removingMemberId === mUser?._id
+                              }
                               title="Видалити з групи"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 />
                             </Button>
                           )}
                       </div>
@@ -471,9 +493,15 @@ export default function GroupDetailsPage({
                               }
                             }}
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            disabled={isCancellingInvite}
+                            isLoading={
+                              isCancellingInvite &&
+                              cancellingInvite?.type === invite.type &&
+                              cancellingInvite?.value === invite.value
+                            }
                             title="Скасувати запрошення"
                           >
-                            <X className="h-4 w-4" />
+                            <X />
                           </Button>
                         </div>
                       ))}

@@ -6,7 +6,14 @@ import { useAuth } from "../providers/AuthContext";
 
 import ThemeToggle from "../ToggleTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ArrowLeft, Guitar, LogOut, Plus, UserRound, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Guitar,
+  LogOut,
+  Plus,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -15,11 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Separator } from "../ui/separator";
 import { TelegramDesktopLogin } from "../ui/telegram-desktop-login";
 import Link from "next/link";
@@ -28,12 +31,26 @@ import { usePathname, useRouter } from "next/navigation";
 export const Header = () => {
   const { user, isAuthenticated, isLoading, refreshUser, logout } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <header className="flex sticky top-0 z-50 h-14 w-full bg-background/50 backdrop-blur-sm items-center justify-between  py-3 border-b">
       <div className="text-lg font-semibold w-full max-w-[1920px] m-auto px-4 flex gap-2 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <Image
               src="/logo.svg"
               alt="Worship Library"
@@ -48,7 +65,11 @@ export const Header = () => {
 
         <div className="flex gap-2 items-center">
           <Button asChild size="icon" variant="ghost">
-            <Link href="/chords" aria-label="Каталог акордів" title="Каталог акордів">
+            <Link
+              href="/chords"
+              aria-label="Каталог акордів"
+              title="Каталог акордів"
+            >
               <Guitar />
             </Link>
           </Button>
@@ -121,9 +142,10 @@ export const Header = () => {
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start text-destructive hover:text-destructive"
-                    onClick={logout}
+                    onClick={handleLogout}
+                    isLoading={isLoggingOut}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut data-icon="inline-start" />
                     Вийти
                   </Button>
                 </PopoverContent>

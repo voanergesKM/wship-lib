@@ -67,6 +67,7 @@ export function SongPage({ slug }: { slug: string }) {
 
   const { user, isAuthenticated, refreshUser } = useAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isReviewOpenOverride, setIsReviewOpenOverride] = useState<
     boolean | null
@@ -105,13 +106,11 @@ export function SongPage({ slug }: { slug: string }) {
   } = useConductorFollow(conductorSessionId);
 
   // Conductor mode
-  const {
-    update: updateConductorSession,
-    end: endConductorSession,
-  } = useConductorSession({
-    groupId: groupId || undefined,
-    initialSessionId: asConductorSessionId,
-  });
+  const { update: updateConductorSession, end: endConductorSession } =
+    useConductorSession({
+      groupId: groupId || undefined,
+      initialSessionId: asConductorSessionId,
+    });
 
   const {
     proposals,
@@ -119,6 +118,7 @@ export function SongPage({ slug }: { slug: string }) {
     createProposal,
     updateProposal,
     cancelProposal,
+    isCancelling,
     reviewProposal,
     isReviewing,
   } = useSongProposals(slug, Boolean(slug));
@@ -199,7 +199,8 @@ export function SongPage({ slug }: { slug: string }) {
   );
 
   const hasSections = useMemo(
-    () => Boolean(data?.document && /<section\s+(?:id|name)=/i.test(data.document)),
+    () =>
+      Boolean(data?.document && /<section\s+(?:id|name)=/i.test(data.document)),
     [data],
   );
 
@@ -217,9 +218,7 @@ export function SongPage({ slug }: { slug: string }) {
   // Current active arrangement
   const currentArrangement = useMemo(() => {
     if (selectedArrangementId) {
-      return (
-        arrangements.find((a) => a._id === selectedArrangementId) || null
-      );
+      return arrangements.find((a) => a._id === selectedArrangementId) || null;
     }
     if (playlistArrangement) return playlistArrangement;
     return arrangements[0] || null;
@@ -234,8 +233,7 @@ export function SongPage({ slug }: { slug: string }) {
       for (let r = 1; r <= repeat; r++) {
         list.push({
           sectionId: item.section,
-          label:
-            repeat > 1 ? `${item.section} (${r}/${repeat})` : item.section,
+          label: repeat > 1 ? `${item.section} (${r}/${repeat})` : item.section,
         });
       }
     }
@@ -292,11 +290,21 @@ export function SongPage({ slug }: { slug: string }) {
   };
 
   const handleEndConductorSession = async () => {
+    if (isEndingSession) return;
     if (confirm("Завершити живу репетицію для всієї групи?")) {
-      await endConductorSession();
-      await queryClient.invalidateQueries({ queryKey: ["conductorSession"] });
-      toast.info("🎼 Репетицію завершено");
-      router.push(`/groups/${groupId}/lists/${listId}`);
+      setIsEndingSession(true);
+      try {
+        const ended = await endConductorSession();
+        if (!ended) {
+          toast.error("Не вдалося завершити репетицію");
+          return;
+        }
+        await queryClient.invalidateQueries({ queryKey: ["conductorSession"] });
+        toast.info("🎼 Репетицію завершено");
+        router.push(`/groups/${groupId}/lists/${listId}`);
+      } finally {
+        setIsEndingSession(false);
+      }
     }
   };
 
@@ -406,6 +414,7 @@ export function SongPage({ slug }: { slug: string }) {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
       <SongLiveRehearsalBanners
+        isEndingSession={isEndingSession}
         asConductorSessionId={asConductorSessionId}
         conductorSessionId={conductorSessionId}
         conductorDisconnected={conductorState?.isDisconnected}
@@ -426,7 +435,9 @@ export function SongPage({ slug }: { slug: string }) {
           isLiveFollower={isLiveFollower}
           listId={listId}
           playlist={playlist}
-          onConductorSongChange={(songSlug) => updateConductorSession(songSlug, 0)}
+          onConductorSongChange={(songSlug) =>
+            updateConductorSession(songSlug, 0)
+          }
         />
       ) : null}
 
@@ -438,7 +449,11 @@ export function SongPage({ slug }: { slug: string }) {
         {mode === "view" ? (
           <>
             {isAuthenticated && (
-              <Button type="button" variant="outline" onClick={() => setIsAddOpen(true)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddOpen(true)}
+              >
                 <ListPlus className="size-4" />
                 Додати до списку
               </Button>
@@ -449,7 +464,9 @@ export function SongPage({ slug }: { slug: string }) {
                 arrangements={arrangements}
                 currentArrangement={currentArrangement}
                 isPlayingStructure={isPlayingStructure}
-                canManageCurrentArrangement={canManageArrangement(currentArrangement)}
+                canManageCurrentArrangement={canManageArrangement(
+                  currentArrangement,
+                )}
                 onTogglePlayback={() => {
                   setIsPlayingStructure((prev) => !prev);
                   setActiveStepIndex(0);
@@ -514,7 +531,11 @@ export function SongPage({ slug }: { slug: string }) {
             )}
           </>
         ) : canEdit ? (
-          <Button type="button" variant="outline" onClick={() => setMode("view")}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setMode("view")}
+          >
             <X className="size-4 mr-1" />
             Скасувати
           </Button>
@@ -524,6 +545,7 @@ export function SongPage({ slug }: { slug: string }) {
       {/* Banner if user has an active pending proposal */}
       {mode === "view" && !canEdit && myPendingProposal && (
         <SongPendingProposalBanner
+          isCancelling={isCancelling}
           onEdit={() => setIsProposalDialogOpen(true)}
           onCancel={handleCancelProposal}
         />
@@ -536,7 +558,9 @@ export function SongPage({ slug }: { slug: string }) {
           activeStepIndex={effectiveActiveStepIndex}
           onStepChange={handleStepChange}
           onClose={() => setIsPlayingStructure(false)}
-          canManage={!isLiveFollower && canManageArrangement(currentArrangement)}
+          canManage={
+            !isLiveFollower && canManageArrangement(currentArrangement)
+          }
           readOnly={isLiveFollower}
           isLive={isLiveFollower || isLiveConductor}
           onEdit={() => {
@@ -625,7 +649,8 @@ export function SongPage({ slug }: { slug: string }) {
             {arrangementToDelete.name}&raquo;?
           </span>
           <span className="block text-xs text-muted-foreground">
-            Цю дію неможливо буде скасувати. Структуру також буде вилучено з усіх списків пісень, де її було призначено.
+            Цю дію неможливо буде скасувати. Структуру також буде вилучено з
+            усіх списків пісень, де її було призначено.
           </span>
         </DeleteConfirmationDialog>
       )}
@@ -695,10 +720,13 @@ export function SongPage({ slug }: { slug: string }) {
           onConfirm={handleDeleteSong}
         >
           <span>
-            Ви впевнені, що хочете видалити пісню <strong>«{data.title}»</strong>?
+            Ви впевнені, що хочете видалити пісню{" "}
+            <strong>«{data.title}»</strong>?
           </span>
           <span className="block text-xs text-muted-foreground">
-            Ця дія є незворотною. Пісню буде видалено з бібліотеки, а також автоматично вилучено з усіх списків відтворень разом із пов&apos;язаними структурами та історією пропозицій.
+            Ця дія є незворотною. Пісню буде видалено з бібліотеки, а також
+            автоматично вилучено з усіх списків відтворень разом із
+            пов&apos;язаними структурами та історією пропозицій.
           </span>
         </DeleteConfirmationDialog>
       )}
@@ -891,7 +919,6 @@ function SongProposalReviewButton({
           Історія змін ({proposalCount})
         </Button>
       )}
-
     </>
   );
 }

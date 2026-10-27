@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Plus,
-  X,
-  ListMusic,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { Plus, X, ListMusic, RotateCcw, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +38,9 @@ export function SongArrangementDialog({
   isSaving = false,
 }: SongArrangementDialogProps) {
   const [name, setName] = useState(arrangement?.name || "Основна");
-  const [items, setItems] = useState<ArrangementItem[]>(arrangement?.items || []);
+  const [items, setItems] = useState<ArrangementItem[]>(
+    arrangement?.items || [],
+  );
   const [customSection, setCustomSection] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -164,7 +160,9 @@ export function SongArrangementDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <ListMusic className="size-5 text-primary" />
-            {arrangement ? "Редагування структури пісні" : "Конструктор структури пісні"}
+            {arrangement
+              ? "Редагування структури пісні"
+              : "Конструктор структури пісні"}
           </DialogTitle>
           <DialogDescription>
             {arrangement
@@ -209,8 +207,8 @@ export function SongArrangementDialog({
                 ))
               ) : (
                 <p className="text-xs text-muted-foreground italic">
-                  У тексті пісні не знайдено тегів &lt;section id=&quot;...&quot;&gt;.
-                  Ви можете додавати блоки вручну нижче.
+                  У тексті пісні не знайдено тегів &lt;section
+                  id=&quot;...&quot;&gt;. Ви можете додавати блоки вручну нижче.
                 </p>
               )}
             </div>
@@ -320,7 +318,11 @@ export function SongArrangementDialog({
             >
               Скасувати
             </Button>
-            <Button type="submit" disabled={isSaving || items.length === 0}>
+            <Button
+              type="submit"
+              disabled={isSaving || items.length === 0}
+              isLoading={isSaving}
+            >
               {arrangement ? "Зберегти зміни" : "Зберегти структуру"}
             </Button>
           </div>

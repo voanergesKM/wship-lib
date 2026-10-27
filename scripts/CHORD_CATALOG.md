@@ -20,6 +20,8 @@ The command is idempotent by stable seed IDs. Existing records are never overwri
 
 Approvals and direct admin saves use the same write helper and apply the voicing/type and history record in one transaction. The server derives direct-save permission from the authenticated role, never request fields. Both require an explanatory comment, enforce uniqueness and reject stale versions. The editor refreshes the catalog after a direct save. Version checks prevent stale edits, and unique indexes resolve simultaneous duplicate approvals. Proposal bodies are parsed by shared Zod schemas on submission and approval. Numeric pitches, actual lowest MIDI note, all declared notes/omissions, string order, fingering and barres are validated. Musical validation does not guarantee comfortable hand placement; the moderator checks playability.
 
+The editor submit action and proposal approve/reject/cancel actions display an inline progress indicator while pending and disable repeated submissions. For proposal review, only the action being performed displays the indicator. The shared `Button` owns the spinner, busy state and disabling through its optional `isLoading` prop; callers provide the pending condition. This is a UI-only change; no migration, API, or deployment configuration changes are required.
+
 ## Rendering and editing
 
 The whole approved catalog is fetched through `/api/chords`, shared by React Query for one minute. Changes invalidate the cache for the reviewer; other browsers refresh on their next stale query/refocus. Data is not read from the seed on the server or in the browser.

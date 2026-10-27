@@ -21,6 +21,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/shared/ButtonSpinner";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -28,7 +29,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { groupsService, PopulatedSongListItem } from "@/services/groups.service";
+import {
+  groupsService,
+  PopulatedSongListItem,
+} from "@/services/groups.service";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { useSongArrangements } from "@/hooks/useSongArrangements";
 import { useAuth } from "@/components/providers/AuthContext";
@@ -75,7 +79,11 @@ export default function SongListPage({
   const canConduct = userGroupRole === "owner" || userGroupRole === "admin";
 
   // Fetch List details
-  const { data: list, isLoading: listLoading, error: listError } = useQuery({
+  const {
+    data: list,
+    isLoading: listLoading,
+    error: listError,
+  } = useQuery({
     queryKey: ["songList", groupId, listId],
     queryFn: () => groupsService.getSongListDetails(groupId, listId),
     enabled: Boolean(groupId && listId),
@@ -151,11 +159,17 @@ export default function SongListPage({
     },
   });
 
-  const { mutateAsync: removeSong, isPending: isRemovingSong } = useMutation({
+  const {
+    mutateAsync: removeSong,
+    isPending: isRemovingSong,
+    variables: removingSongId,
+  } = useMutation({
     mutationFn: (songId: string) =>
       groupsService.removeSongFromList(groupId, listId, songId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["songList", groupId, listId] });
+      queryClient.invalidateQueries({
+        queryKey: ["songList", groupId, listId],
+      });
     },
   });
 
@@ -190,6 +204,11 @@ export default function SongListPage({
     await updateList({ name: editedName.trim() });
   };
 
+  const [movingSong, setMovingSong] = useState<{
+    index: number;
+    direction: "up" | "down";
+  } | null>(null);
+
   const handleMoveSong = async (index: number, direction: "up" | "down") => {
     if (!list?.songs) return;
 
@@ -205,7 +224,12 @@ export default function SongListPage({
 
     // Extract just the string IDs for the update payload
     const songIds = newSongs.map((song) => song._id);
-    await updateList({ songs: songIds });
+    setMovingSong({ index, direction });
+    try {
+      await updateList({ songs: songIds });
+    } finally {
+      setMovingSong(null);
+    }
   };
 
   const handleRemoveSong = async (songId: string) => {
@@ -219,7 +243,9 @@ export default function SongListPage({
   if (listError || !list) {
     return (
       <div className="text-center py-12 space-y-4">
-        <h1 className="text-2xl font-bold text-destructive">Помилка завантаження</h1>
+        <h1 className="text-2xl font-bold text-destructive">
+          Помилка завантаження
+        </h1>
         <p className="text-muted-foreground">
           Список пісень не знайдено або у вас немає доступу.
         </p>
@@ -297,7 +323,9 @@ export default function SongListPage({
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-          {activeSession && !activeSession.endedAt && !activeSession.isDisconnected ? (
+          {activeSession &&
+          !activeSession.endedAt &&
+          !activeSession.isDisconnected ? (
             activeSession.conductorUserId === user?.id ? (
               <Button
                 asChild
@@ -359,40 +387,42 @@ export default function SongListPage({
       </div>
 
       {/* Live Session Active Banner */}
-      {activeSession && !activeSession.endedAt && !activeSession.isDisconnected && (
-        <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-          <div className="flex items-center gap-2.5">
-            <Radio className="size-5 text-green-600 dark:text-green-400 shrink-0 animate-pulse" />
-            <div>
-              <p className="font-semibold text-green-950 dark:text-green-200">
-                Триває жива репетиція
-              </p>
-              <p className="text-xs text-green-800/80 dark:text-green-300/80">
-                {activeSession.conductorUserId === user?.id
-                  ? "Ви запустили диригування цим списком пісень."
-                  : "Диригент проводить синхронізовану репетицію списку."}
-              </p>
+      {activeSession &&
+        !activeSession.endedAt &&
+        !activeSession.isDisconnected && (
+          <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2.5">
+              <Radio className="size-5 text-green-600 dark:text-green-400 shrink-0 animate-pulse" />
+              <div>
+                <p className="font-semibold text-green-950 dark:text-green-200">
+                  Триває жива репетиція
+                </p>
+                <p className="text-xs text-green-800/80 dark:text-green-300/80">
+                  {activeSession.conductorUserId === user?.id
+                    ? "Ви запустили диригування цим списком пісень."
+                    : "Диригент проводить синхронізовану репетицію списку."}
+                </p>
+              </div>
             </div>
-          </div>
-          <Button
-            asChild
-            size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white shrink-0"
-          >
-            <Link
-              href={
-                activeSession.conductorUserId === user?.id
-                  ? `/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&asConductor=${activeSession._id}`
-                  : `/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&conductor=${activeSession._id}`
-              }
+            <Button
+              asChild
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white shrink-0"
             >
-              {activeSession.conductorUserId === user?.id
-                ? "Перейти до диригування"
-                : "Приєднатися"}
-            </Link>
-          </Button>
-        </div>
-      )}
+              <Link
+                href={
+                  activeSession.conductorUserId === user?.id
+                    ? `/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&asConductor=${activeSession._id}`
+                    : `/songs/${activeSession.currentSongSlug}?list=${listId}&group=${groupId}&conductor=${activeSession._id}`
+                }
+              >
+                {activeSession.conductorUserId === user?.id
+                  ? "Перейти до диригування"
+                  : "Приєднатися"}
+              </Link>
+            </Button>
+          </div>
+        )}
 
       {/* Validation banner: songs without arrangement */}
       {canConduct && songsWithoutArrangement.length > 0 && (
@@ -406,7 +436,8 @@ export default function SongListPage({
             ))}
           </ul>
           <p className="text-xs text-muted-foreground">
-            Призначте структуру кожній пісні списку, щоб мати змогу запустити «Живий список».
+            Призначте структуру кожній пісні списку, щоб мати змогу запустити
+            «Живий список».
           </p>
         </div>
       )}
@@ -440,6 +471,11 @@ export default function SongListPage({
                   {/* Move buttons */}
                   <div className="flex flex-col gap-1">
                     <Button
+                      isLoading={
+                        isUpdating &&
+                        movingSong?.index === index &&
+                        movingSong.direction === "up"
+                      }
                       size="icon"
                       variant="ghost"
                       className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
@@ -447,9 +483,14 @@ export default function SongListPage({
                       onClick={() => handleMoveSong(index, "up")}
                       title="Перемістити вгору"
                     >
-                      <ArrowUp className="h-4.5 w-4.5" />
+                      <ArrowUp />
                     </Button>
                     <Button
+                      isLoading={
+                        isUpdating &&
+                        movingSong?.index === index &&
+                        movingSong.direction === "down"
+                      }
                       size="icon"
                       variant="ghost"
                       className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
@@ -457,7 +498,7 @@ export default function SongListPage({
                       onClick={() => handleMoveSong(index, "down")}
                       title="Перемістити вниз"
                     >
-                      <ArrowDown className="h-4.5 w-4.5" />
+                      <ArrowDown />
                     </Button>
                   </div>
 
@@ -517,9 +558,10 @@ export default function SongListPage({
                     className="text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0"
                     onClick={() => handleRemoveSong(song._id)}
                     disabled={isRemovingSong}
+                    isLoading={isRemovingSong && removingSongId === song._id}
                     title="Вилучити зі списку"
                   >
-                    <Trash2 className="h-4.5 w-4.5" />
+                    <Trash2 />
                   </Button>
                 </div>
               );
@@ -531,7 +573,8 @@ export default function SongListPage({
             <div className="space-y-1">
               <p className="font-medium text-foreground">Цей список порожній</p>
               <p className="text-sm max-w-sm mx-auto">
-                Знайдіть потрібні пісні через пошук на головній сторінці та додайте їх до цього списку.
+                Знайдіть потрібні пісні через пошук на головній сторінці та
+                додайте їх до цього списку.
               </p>
             </div>
             <Button asChild variant="outline">
@@ -574,6 +617,7 @@ function SongListArrangementDialog({
   open,
   onOpenChange,
   onSelect,
+  isSaving,
 }: {
   song: PopulatedSongListItem;
   currentArrangementId?: string;
@@ -583,9 +627,27 @@ function SongListArrangementDialog({
   isSaving: boolean;
 }) {
   const { arrangements, isLoading } = useSongArrangements(song.slug, open);
+  const [pendingSelection, setPendingSelection] = useState<
+    string | null | undefined
+  >(undefined);
+
+  const handleSelect = async (arrangementId: string | null) => {
+    if (isSaving) return;
+    setPendingSelection(arrangementId);
+    try {
+      await onSelect(arrangementId);
+    } finally {
+      setPendingSelection(undefined);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen: boolean) => {
+        if (!isSaving) onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -593,7 +655,8 @@ function SongListArrangementDialog({
             Структура пісні в списку
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Пісня: <span className="font-semibold text-foreground">{song.title}</span>
+            Пісня:{" "}
+            <span className="font-semibold text-foreground">{song.title}</span>
           </p>
         </DialogHeader>
 
@@ -603,11 +666,15 @@ function SongListArrangementDialog({
           </div>
         ) : (
           <div className="space-y-2.5 py-2 max-h-72 overflow-y-auto">
-            <div
-              onClick={() => onSelect(null)}
+            <button
+              type="button"
+              disabled={isSaving}
+              aria-busy={isSaving && pendingSelection === null}
+              onClick={() => handleSelect(null)}
               className={cn(
-                "p-3 rounded-lg border flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors",
-                !currentArrangementId && "border-primary bg-primary/5 font-semibold",
+                "w-full text-left p-3 rounded-lg border flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                !currentArrangementId &&
+                  "border-primary bg-primary/5 font-semibold",
               )}
             >
               <div>
@@ -616,8 +683,12 @@ function SongListArrangementDialog({
                   Повний текст пісні без виділення порядку
                 </p>
               </div>
-              {!currentArrangementId && <Check className="size-4 text-primary" />}
-            </div>
+              {isSaving && pendingSelection === null ? (
+                <ButtonSpinner />
+              ) : !currentArrangementId ? (
+                <Check className="size-4 text-primary" />
+              ) : null}
+            </button>
 
             {arrangements.map((arr) => {
               const isSelected = currentArrangementId === arr._id;
@@ -628,11 +699,14 @@ function SongListArrangementDialog({
                 .join(", ");
 
               return (
-                <div
+                <button
+                  type="button"
                   key={arr._id}
-                  onClick={() => onSelect(arr._id)}
+                  disabled={isSaving}
+                  aria-busy={isSaving && pendingSelection === arr._id}
+                  onClick={() => handleSelect(arr._id)}
                   className={cn(
-                    "p-3 rounded-lg border flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors",
+                    "w-full text-left p-3 rounded-lg border flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
                     isSelected && "border-primary bg-primary/5 font-semibold",
                   )}
                 >
@@ -640,8 +714,12 @@ function SongListArrangementDialog({
                     <p className="font-medium text-sm">{arr.name}</p>
                     <p className="text-xs text-muted-foreground">{summary}</p>
                   </div>
-                  {isSelected && <Check className="size-4 text-primary" />}
-                </div>
+                  {isSaving && pendingSelection === arr._id ? (
+                    <ButtonSpinner />
+                  ) : isSelected ? (
+                    <Check className="size-4 text-primary" />
+                  ) : null}
+                </button>
               );
             })}
 

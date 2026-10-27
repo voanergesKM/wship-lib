@@ -4,11 +4,13 @@ import { Clock, Edit3, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SongPendingProposalBannerProps {
+  isCancelling?: boolean;
   onEdit: () => void;
   onCancel: () => void | Promise<void>;
 }
 
 export function SongPendingProposalBanner({
+  isCancelling = false,
   onEdit,
   onCancel,
 }: SongPendingProposalBannerProps) {
@@ -32,6 +34,7 @@ export function SongPendingProposalBanner({
           variant="outline"
           className="bg-background"
           onClick={onEdit}
+          disabled={isCancelling}
         >
           <Edit3 className="size-3.5 mr-1" />
           Редагувати
@@ -41,8 +44,10 @@ export function SongPendingProposalBanner({
           variant="ghost"
           className="text-destructive hover:bg-destructive/10"
           onClick={onCancel}
+          disabled={isCancelling}
+          isLoading={isCancelling}
         >
-          <X className="size-3.5 mr-1" />
+          <X data-icon="inline-start" />
           Скасувати
         </Button>
       </div>

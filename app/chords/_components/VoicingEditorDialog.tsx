@@ -289,6 +289,7 @@ export function VoicingEditorDialog({
             </Button>
             <Button
               type="submit"
+              isLoading={mutation.isPending}
               disabled={
                 !!formError ||
                 !definition ||

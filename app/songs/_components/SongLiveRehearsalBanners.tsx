@@ -4,6 +4,7 @@ import { LogOut, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SongLiveRehearsalBannersProps {
+  isEndingSession?: boolean;
   asConductorSessionId: string | null;
   conductorSessionId: string | null;
   conductorDisconnected?: boolean;
@@ -16,6 +17,7 @@ interface SongLiveRehearsalBannersProps {
 }
 
 export function SongLiveRehearsalBanners({
+  isEndingSession = false,
   asConductorSessionId,
   conductorSessionId,
   conductorDisconnected,
@@ -46,7 +48,13 @@ export function SongLiveRehearsalBanners({
               </p>
             </div>
           </div>
-          <Button size="sm" variant="destructive" onClick={onEndConductorSession} className="shrink-0">
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={onEndConductorSession}
+            isLoading={isEndingSession}
+            className="shrink-0"
+          >
             Завершити репетицію
           </Button>
         </div>
@@ -59,7 +67,9 @@ export function SongLiveRehearsalBanners({
             <div>
               <p className="flex items-center gap-2 font-semibold text-green-950 dark:text-green-200">
                 <span>👥 Режим репетиції (слідування за диригентом)</span>
-                <span className="rounded-full bg-green-600 px-2 py-0.5 text-[11px] font-medium text-white">Live</span>
+                <span className="rounded-full bg-green-600 px-2 py-0.5 text-[11px] font-medium text-white">
+                  Live
+                </span>
               </p>
               <p className="mt-0.5 text-xs text-green-800/80 dark:text-green-300/80">
                 {conductorDisconnected
@@ -68,8 +78,16 @@ export function SongLiveRehearsalBanners({
               </p>
             </div>
           </div>
-          <Button asChild size="sm" variant="outline" className="shrink-0 border-green-600/30 text-green-700 hover:bg-green-500/20 dark:text-green-300">
-            <Link href={playlistHref}><LogOut className="mr-1 size-3.5" />Вийти</Link>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="shrink-0 border-green-600/30 text-green-700 hover:bg-green-500/20 dark:text-green-300"
+          >
+            <Link href={playlistHref}>
+              <LogOut className="mr-1 size-3.5" />
+              Вийти
+            </Link>
           </Button>
         </div>
       ) : null}
@@ -81,14 +99,33 @@ export function SongLiveRehearsalBanners({
             <div>
               <p className="flex items-center gap-2 font-semibold text-foreground">
                 <span>🎼 Репетицію завершено</span>
-                <span className="rounded-full border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Завершено</span>
+                <span className="rounded-full border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  Завершено
+                </span>
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Диригент закрив сесію. Ви можете продовжити роботу в звичайному режимі.</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Диригент закрив сесію. Ви можете продовжити роботу в звичайному
+                режимі.
+              </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button asChild size="sm" variant="outline"><Link href={`/songs/${slug}?list=${listId}&group=${groupId}`}>Звичайний режим</Link></Button>
-            <Button asChild size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground"><Link href={playlistHref}><LogOut className="mr-1 size-3.5" />До списку</Link></Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/songs/${slug}?list=${listId}&group=${groupId}`}>
+                Звичайний режим
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Link href={playlistHref}>
+                <LogOut className="mr-1 size-3.5" />
+                До списку
+              </Link>
+            </Button>
           </div>
         </div>
       ) : null}

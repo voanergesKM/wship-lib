@@ -57,7 +57,10 @@ export function AddToPlaylistDialog({
   });
 
   // Fetch arrangements for this song if slug is provided
-  const { arrangements } = useSongArrangements(songSlug || "", open && Boolean(songSlug));
+  const { arrangements } = useSongArrangements(
+    songSlug || "",
+    open && Boolean(songSlug),
+  );
 
   const effectiveGroupId = selectedGroupId || groups?.[0]?._id || "";
 
@@ -69,7 +72,11 @@ export function AddToPlaylistDialog({
   });
 
   // Mutation to add song to existing list
-  const { mutateAsync: addSong, isPending: isAdding } = useMutation({
+  const {
+    mutateAsync: addSong,
+    isPending: isAdding,
+    variables: addingToList,
+  } = useMutation({
     mutationFn: ({ listId }: { listId: string }) =>
       groupsService.addSongToList(
         effectiveGroupId,
@@ -263,6 +270,9 @@ export function AddToPlaylistDialog({
                               {list.name}
                             </span>
                             <Button
+                              isLoading={
+                                isAdding && addingToList?.listId === list._id
+                              }
                               size="sm"
                               variant={hasSong ? "secondary" : "default"}
                               disabled={hasSong || isAdding}
@@ -273,7 +283,7 @@ export function AddToPlaylistDialog({
                                 "Вже додано"
                               ) : (
                                 <>
-                                  <ListPlus className="h-4 w-4 mr-1" />
+                                  <ListPlus data-icon="inline-start" />
                                   Додати
                                 </>
                               )}
