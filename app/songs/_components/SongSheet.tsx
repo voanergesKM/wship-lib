@@ -59,6 +59,9 @@ export function SongSheet({
 
     if (block.type === "lyrics") {
       const hasChords = showChords && block.parts.some((p) => Boolean(p.chord));
+      const hasLyrics = block.parts.some((part) => part.lyric.trim().length > 0);
+
+      if (!hasChords && !hasLyrics) return null;
 
       if (!hasChords) {
         return (
@@ -99,16 +102,18 @@ export function SongSheet({
                         <span className="invisible select-none">&#8203;</span>
                       )}
                     </span>
-                    <span className="whitespace-pre">
-                      {syl.text ||
-                        (syl.chord ? (
-                          <span className="invisible select-none">
-                            {" ".repeat(syl.chord.length)}
-                          </span>
-                        ) : (
-                          ""
-                        ))}
-                    </span>
+                    {hasLyrics ? (
+                      <span className="whitespace-pre">
+                        {syl.text ||
+                          (syl.chord ? (
+                            <span className="invisible select-none">
+                              {" ".repeat(syl.chord.length)}
+                            </span>
+                          ) : (
+                            ""
+                          ))}
+                      </span>
+                    ) : null}
                   </span>
                 ))}
               </span>
