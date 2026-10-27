@@ -1,3 +1,4 @@
+import { getSongListDetails, GroupReadError } from "@/lib/data/groups";
 import { NextResponse } from "next/server";
 import { chain } from "@/lib/api/composeRoute";
 import { requireAuth, requireGroupAccess } from "@/lib/api/routeGuards";
@@ -13,26 +14,14 @@ type ListRouteParams = {
 
 export const GET = chain<ListRouteParams>()
   .use(requireAuth)
-  .use(requireGroupAccess)
-  .handler(async (_request, { params }) => {
+  .handler(async (_request, { params, session }) => {
     try {
       const { groupId, listId } = params;
-
-      const list = await SongList.findOne({ _id: listId, groupId })
-        .populate("songs")
-        .populate("songArrangements.arrangement")
-        .populate("createdBy", "firstName username")
-        .populate("updatedBy", "firstName username");
-
-      if (!list) {
-        return NextResponse.json(
-          { message: "Список пісень не знайдено" },
-          { status: 404 },
-        );
-      }
-
-      return NextResponse.json(list);
+      return NextResponse.json(await getSongListDetails(groupId, listId, session.user.id));
     } catch (error) {
+      if (error instanceof GroupReadError) {
+        return NextResponse.json({ message: error.message }, { status: error.status });
+      }
       console.error("Error fetching song list:", error);
       return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
     }

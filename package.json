@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:chords": "tsc -p tests/tsconfig.chords.json && node --test .test-build/chords/tests/*.test.js",
+    "test:groups": "node --test tests/groupsData.test.mjs",
     "migrate:chords": "node scripts/migrate-chords.mjs"
   },
   "dependencies": {

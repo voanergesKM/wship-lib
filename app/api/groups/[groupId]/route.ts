@@ -3,6 +3,7 @@ import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
 import { Group } from "@/models/Group";
 import { SongList } from "@/models/SongList";
+import { getGroupDetails, GroupReadError } from "@/lib/data/groups";
 
 export async function GET(
   request: NextRequest,
@@ -16,26 +17,13 @@ export async function GET(
       return NextResponse.json({ message: "Неавторизовано" }, { status: 401 });
     }
 
-    const group = await Group.findById(groupId)
-      .populate("members.userId", "firstName username email photoUrl")
-      .populate("invitations.invitedBy", "firstName username")
-      .populate("createdBy", "firstName username");
-
-    if (!group) {
-      return NextResponse.json({ message: "Групу не знайдено" }, { status: 404 });
-    }
-
-    // Check membership
-    const isMember = group.members.some(
-      (m: any) => m.userId?._id?.toString() === session.user.id
-    );
-
-    if (!isMember) {
-      return NextResponse.json({ message: "Немає доступу до цієї групи" }, { status: 403 });
-    }
+    const group = await getGroupDetails(groupId, session.user.id);
 
     return NextResponse.json(group);
   } catch (error) {
+    if (error instanceof GroupReadError) {
+      return NextResponse.json({ message: error.message }, { status: error.status });
+    }
     console.error("Error fetching group details:", error);
     return NextResponse.json({ message: "Помилка сервера" }, { status: 500 });
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/lib/serverAuth";
 import { connectDB } from "@/lib/db";
 import { Group } from "@/models/Group";
+import { getMyGroups } from "@/lib/data/groups";
 
 export async function GET() {
   await connectDB();
@@ -11,15 +12,7 @@ export async function GET() {
       return NextResponse.json({ message: "Неавторизовано" }, { status: 401 });
     }
 
-    const userId = session.user.id;
-
-    // Find all groups where the user is a member
-    const groups = await Group.find({
-      "members.userId": userId,
-    })
-      .populate("members.userId", "firstName username email photoUrl")
-      .populate("createdBy", "firstName username")
-      .sort({ createdAt: -1 });
+    const groups = await getMyGroups(session.user.id);
 
     return NextResponse.json(groups);
   } catch (error) {
