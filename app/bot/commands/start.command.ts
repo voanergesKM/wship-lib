@@ -11,17 +11,18 @@ export const startCommand: BotHandler = async (ctx) => {
 
   if (parts.length > 1 && parts[1].startsWith("auth_")) {
     const code = parts[1];
-    
+
     try {
       await connectDB();
       const session = await AuthSession.findOne({ code, status: "pending" });
-      
+
       if (session) {
         let dbUser = await User.findOne({ telegramId: String(ctx.from.id) });
-        
+
         if (!dbUser) {
           dbUser = await User.create({
             telegramId: String(ctx.from.id),
+            permissionProfileId: "user",
             username: ctx.from.username || null,
             firstName: ctx.from.first_name,
             lastName: ctx.from.last_name || null,
@@ -34,14 +35,21 @@ export const startCommand: BotHandler = async (ctx) => {
           dbUser.lastName = ctx.from.last_name || dbUser.lastName || null;
           await dbUser.save();
         }
-        
+
+        if (!dbUser.isActive) {
+          await sendMessage(
+            ctx.chat.id,
+            "Обліковий запис заблокований. Зверніться до адміністратора.",
+          );
+          return;
+        }
         session.status = "completed";
         session.user = dbUser._id;
         await session.save();
-        
+
         await sendMessage(
           ctx.chat.id,
-          "✅ Ви успішно авторизовані на сайті! Можете закрити цей чат і повернутись у браузер."
+          "✅ Ви успішно авторизовані на сайті! Можете закрити цей чат і повернутись у браузер.",
         );
         return;
       }

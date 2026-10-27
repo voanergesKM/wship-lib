@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { can } from "@/lib/permissions/catalog";
 import Image from "next/image";
 import { useAuth } from "../providers/AuthContext";
 
@@ -138,6 +139,16 @@ export const Header = () => {
                       Мої групи
                     </Link>
                   </Button>
+                  {can(user, "admin.access") && (
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Link href="/admin">Адмінка</Link>
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

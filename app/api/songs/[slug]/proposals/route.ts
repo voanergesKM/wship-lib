@@ -1,3 +1,4 @@
+import { can } from "@/lib/permissions/catalog";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
 import { Song } from "@/models/Song";
@@ -26,7 +27,7 @@ export async function GET(
 
   const isOwnerOrAdmin =
     song.createdBy?.toString() === session.user.id ||
-    session.user.role === "admin";
+    can(session.user, "songs.proposals.review");
 
   // Owner/Admin sees all proposals; regular users see only their own proposals
   const query = isOwnerOrAdmin
@@ -116,8 +117,9 @@ export async function POST(
         console.error("Error triggering proposal notification:", err),
       );
 
-    const populatedProposal = await SongProposal.findById(proposal._id)
-      .populate("user", "firstName lastName username photoUrl");
+    const populatedProposal = await SongProposal.findById(
+      proposal._id,
+    ).populate("user", "firstName lastName username photoUrl");
 
     return NextResponse.json(populatedProposal, { status: 201 });
   } catch (error) {

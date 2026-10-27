@@ -21,3 +21,6 @@ export { UserPreference } from "./UserPreference";
 export { Arrangement } from "./Arrangement";
 export { SongProposal } from "./SongProposal";
 export { ConductorSession } from "./ConductorSession";
+
+import "./PermissionProfile";
+import "./AdminAudit";

@@ -1,3 +1,4 @@
+import { can } from "@/lib/permissions/catalog";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
 import { SongProposal } from "@/models/SongProposal";
@@ -60,7 +61,9 @@ export async function PATCH(
 
   if (proposal.status !== "pending") {
     return NextResponse.json(
-      { error: "Можна редагувати лише активні пропозиції у статусі очікування" },
+      {
+        error: "Можна редагувати лише активні пропозиції у статусі очікування",
+      },
       { status: 400 },
     );
   }
@@ -71,7 +74,8 @@ export async function PATCH(
     if (body.title) proposal.proposedData.title = body.title;
     if (body.document) proposal.proposedData.document = body.document;
     if (Array.isArray(body.tags)) proposal.proposedData.tags = body.tags;
-    if (Array.isArray(body.authors)) proposal.proposedData.authors = body.authors;
+    if (Array.isArray(body.authors))
+      proposal.proposedData.authors = body.authors;
     proposal.proposedData.key = body.key || undefined;
     proposal.proposedData.bpm = body.bpm ? Number(body.bpm) : undefined;
     if (body.youtube) {
@@ -92,8 +96,9 @@ export async function PATCH(
         console.error("Error triggering proposal update notification:", err),
       );
 
-    const populatedProposal = await SongProposal.findById(proposal._id)
-      .populate("user", "firstName lastName username photoUrl");
+    const populatedProposal = await SongProposal.findById(
+      proposal._id,
+    ).populate("user", "firstName lastName username photoUrl");
 
     return NextResponse.json(populatedProposal);
   } catch (error) {
@@ -129,7 +134,7 @@ export async function DELETE(
   }
 
   const isAuthor = proposal.user.toString() === session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = can(session.user, "songs.proposals.review");
 
   if (!isAuthor && !isAdmin) {
     return NextResponse.json(

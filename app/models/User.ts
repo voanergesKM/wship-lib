@@ -30,6 +30,13 @@ const UserSchema = new Schema(
       enum: ["admin", "editor", "viewer"],
       default: "viewer",
     },
+    permissionProfileId: {
+      type: String,
+      ref: "PermissionProfile",
+      index: true,
+    },
+    lastLoginAt: { type: Date, default: null },
+    lastSeenAt: { type: Date, default: null },
     isActive: {
       type: Boolean,
       default: true,

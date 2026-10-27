@@ -9,9 +9,10 @@ import React, {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { PermissionAccess } from "@/lib/permissions/catalog";
 import type { UserPreferences } from "@/types/user-preferences";
 
-export interface AuthUser {
+export interface AuthUser extends PermissionAccess {
   id: string;
   telegramId: string;
   firstName: string;
@@ -83,12 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshUser,
       logout,
     }),
-    [user, isLoading, refreshUser, logout]
+    [user, isLoading, refreshUser, logout],
   );
 
-  return (
-    <AuthContext value={contextValue}>
-      {children}
-    </AuthContext>
-  );
+  return <AuthContext value={contextValue}>{children}</AuthContext>;
 }

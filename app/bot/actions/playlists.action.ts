@@ -49,7 +49,10 @@ export async function playlistsFlow(
     });
   };
 
-  const dbUser = await User.findOne({ telegramId: String(userId) });
+  const dbUser = await User.findOne({
+    telegramId: String(userId),
+    isActive: true,
+  });
 
   if (!dbUser) {
     await sendOrEdit(
@@ -124,7 +127,9 @@ export async function playlistsFlow(
     activeSessions.map((s) => [s.groupId.toString(), s]),
   );
 
-  const totalCount = await SongList.countDocuments({ groupId: { $in: groupIds } });
+  const totalCount = await SongList.countDocuments({
+    groupId: { $in: groupIds },
+  });
 
   if (totalCount === 0) {
     await sendOrEdit(
@@ -154,7 +159,10 @@ export async function playlistsFlow(
 
   const lists = await SongList.find({ groupId: { $in: groupIds } })
     .populate<{ groupId: { _id: any; name: string } }>("groupId", "name")
-    .populate<{ songs: { _id: any; title: string; slug: string }[] }>("songs", "title slug")
+    .populate<{ songs: { _id: any; title: string; slug: string }[] }>(
+      "songs",
+      "title slug",
+    )
     .sort({ updatedAt: -1 })
     .skip((safePage - 1) * PAGE_SIZE)
     .limit(PAGE_SIZE);
@@ -165,7 +173,9 @@ export async function playlistsFlow(
   const startIndex = (safePage - 1) * PAGE_SIZE;
 
   lists.forEach((list, i) => {
-    const groupName = list.groupId?.name ? ` <i>(${escapeHtml(list.groupId.name)})</i>` : "";
+    const groupName = list.groupId?.name
+      ? ` <i>(${escapeHtml(list.groupId.name)})</i>`
+      : "";
     text += `<b>${startIndex + i + 1}. ${escapeHtml(list.name)}</b>${groupName}\n`;
 
     if (list.songs && list.songs.length > 0) {
@@ -182,7 +192,8 @@ export async function playlistsFlow(
     text += "\n";
   });
 
-  text += "<i>Натисніть кнопку нижче, щоб відкрити потрібний список у Telegram:</i>";
+  text +=
+    "<i>Натисніть кнопку нижче, щоб відкрити потрібний список у Telegram:</i>";
 
   const inline_keyboard: any[][] = lists.map((list) => {
     const gId = list.groupId?._id

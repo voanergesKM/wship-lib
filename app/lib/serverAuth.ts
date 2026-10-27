@@ -1,9 +1,11 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
+import { getUserAccess } from "@/lib/permissions/server";
 
-export async function getServerAuth() {
+export const getServerAuth = cache(async function getServerAuth() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("session_token")?.value;
@@ -22,6 +24,8 @@ export async function getServerAuth() {
       return { authenticated: false, user: null };
     }
 
+    const access = await getUserAccess(dbUser);
+
     return {
       authenticated: true,
       user: {
@@ -30,6 +34,7 @@ export async function getServerAuth() {
         firstName: dbUser.firstName,
         username: dbUser.username,
         role: dbUser.role,
+        ...access,
         photoUrl: dbUser.photoUrl,
         email: dbUser.email || null,
       },
@@ -38,4 +43,4 @@ export async function getServerAuth() {
     console.error("Error checking getServerAuth:", err);
     return { authenticated: false, user: null };
   }
-}
+});

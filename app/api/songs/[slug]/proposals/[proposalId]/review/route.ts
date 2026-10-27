@@ -1,3 +1,4 @@
+import { can } from "@/lib/permissions/catalog";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
 import { Song } from "@/models/Song";
@@ -27,11 +28,14 @@ export async function POST(
   }
 
   const isOwner = song.createdBy?.toString() === session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = can(session.user, "songs.proposals.review");
 
   if (!isOwner && !isAdmin) {
     return NextResponse.json(
-      { error: "Тільки автор пісні або адміністратор можуть розглядати пропозиції" },
+      {
+        error:
+          "Тільки автор пісні або адміністратор можуть розглядати пропозиції",
+      },
       { status: 403 },
     );
   }

@@ -4,6 +4,7 @@ import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
+import { getUserAccess } from "@/lib/permissions/server";
 import { UserPreference } from "@/models/UserPreference";
 import { DEFAULT_SONG_DISPLAY_PREFERENCES } from "@/types/user-preferences";
 
@@ -37,7 +38,10 @@ export async function GET() {
       );
     }
 
-    const preference = await UserPreference.findOne({ userId: dbUser._id }).lean();
+    const [preference, access] = await Promise.all([
+      UserPreference.findOne({ userId: dbUser._id }).lean(),
+      getUserAccess(dbUser),
+    ]);
 
     return NextResponse.json({
       authenticated: true,
@@ -47,6 +51,7 @@ export async function GET() {
         firstName: dbUser.firstName,
         username: dbUser.username,
         role: dbUser.role,
+        ...access,
         photoUrl: dbUser.photoUrl,
         email: dbUser.email || null,
         preferences: {
@@ -59,7 +64,10 @@ export async function GET() {
       },
     });
   } catch (err: unknown) {
-    console.error("❌ [API /auth/me Error]:", err instanceof Error ? err.message : err);
+    console.error(
+      "❌ [API /auth/me Error]:",
+      err instanceof Error ? err.message : err,
+    );
     return NextResponse.json(
       { authenticated: false, error: "Session expired or invalid" },
       { status: 401 },

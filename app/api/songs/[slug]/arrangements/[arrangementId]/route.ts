@@ -1,3 +1,4 @@
+import { can } from "@/lib/permissions/catalog";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
@@ -30,7 +31,7 @@ export async function PATCH(
   const isCreator =
     arrangement.createdBy &&
     arrangement.createdBy.toString() === session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = can(session.user, "songs.manage");
 
   if (!isCreator && !isAdmin) {
     return NextResponse.json(
@@ -60,10 +61,15 @@ export async function PATCH(
           { status: 400 },
         );
       }
-      arrangement.items = items.map((item: { section: string; repeat?: number }) => ({
-        section: String(item.section).trim(),
-        repeat: typeof item.repeat === "number" && item.repeat > 0 ? item.repeat : 1,
-      }));
+      arrangement.items = items.map(
+        (item: { section: string; repeat?: number }) => ({
+          section: String(item.section).trim(),
+          repeat:
+            typeof item.repeat === "number" && item.repeat > 0
+              ? item.repeat
+              : 1,
+        }),
+      );
     }
 
     await arrangement.save();
@@ -105,7 +111,7 @@ export async function DELETE(
   const isCreator =
     arrangement.createdBy &&
     arrangement.createdBy.toString() === session.user.id;
-  const isAdmin = session.user.role === "admin";
+  const isAdmin = can(session.user, "songs.manage");
 
   if (!isCreator && !isAdmin) {
     return NextResponse.json(

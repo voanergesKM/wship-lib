@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test:chords": "tsc -p tests/tsconfig.chords.json && node --test .test-build/chords/tests/*.test.js",
     "test:groups": "node --test tests/groups*.test.mjs",
-    "migrate:chords": "node scripts/migrate-chords.mjs"
+    "migrate:chords": "node scripts/migrate-chords.mjs",
+    "migrate:permissions": "node scripts/migrate-permissions.mjs",
+    "test:permissions": "node --test tests/permissions*.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-form": "^1.33.0",

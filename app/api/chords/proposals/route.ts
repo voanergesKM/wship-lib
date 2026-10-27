@@ -1,3 +1,4 @@
+import { can } from "@/lib/permissions/catalog";
 import mongoose from "mongoose";
 import { applyChordChange } from "@/lib/chords/applyChange";
 import { randomUUID } from "node:crypto";
@@ -10,32 +11,69 @@ import { checkProposal, chordApiError } from "@/lib/chords/server";
 export async function GET() {
   try {
     const { user } = await getServerAuth();
-    if (!user) return NextResponse.json({ error: "Увійдіть у свій обліковий запис" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { error: "Увійдіть у свій обліковий запис" },
+        { status: 401 },
+      );
     await connectDB();
-    const proposals = await ChordProposalModel.find(user.role === "admin" ? {} : { userId: user.id }).sort({ createdAt: -1 }).lean();
+    const proposals = await ChordProposalModel.find(
+      can(user, "chords.proposals.review") ? {} : { userId: user.id },
+    )
+      .sort({ createdAt: -1 })
+      .lean();
     return NextResponse.json({ proposals });
-  } catch (error) { return chordApiError(error); }
+  } catch (error) {
+    return chordApiError(error);
+  }
 }
 export async function POST(request: NextRequest) {
   try {
     const { user } = await getServerAuth();
-    if (!user) return NextResponse.json({ error: "Увійдіть, щоб запропонувати зміни" }, { status: 401 });
+    if (!user)
+      return NextResponse.json(
+        { error: "Увійдіть, щоб запропонувати зміни" },
+        { status: 401 },
+      );
     const input = proposalSchema.parse(await request.json());
     await connectDB();
     const { definition, before } = await checkProposal(input);
-    const record = { _id: randomUUID(), userId: user.id, authorName: user.firstName || user.username || "Користувач", status: "pending" as const, input, before, definitionSnapshot: definition };
-    if (user.role === "admin") {
+    const record = {
+      _id: randomUUID(),
+      userId: user.id,
+      authorName: user.firstName || user.username || "Користувач",
+      status: "pending" as const,
+      input,
+      before,
+      definitionSnapshot: definition,
+    };
+    if (can(user, "chords.manage")) {
       const session = await mongoose.startSession();
       try {
         const proposal = await session.withTransaction(async () => {
           await applyChordChange(input, session);
-          const [saved] = await ChordProposalModel.create([{ ...record, status: "approved", reviewedBy: user.id, reviewedAt: new Date(), reviewComment: "Пряма зміна адміністратора" }], { session });
+          const [saved] = await ChordProposalModel.create(
+            [
+              {
+                ...record,
+                status: "approved",
+                reviewedBy: user.id,
+                reviewedAt: new Date(),
+                reviewComment: "Пряма зміна адміністратора",
+              },
+            ],
+            { session },
+          );
           return saved;
         });
         return NextResponse.json(proposal, { status: 201 });
-      } finally { await session.endSession(); }
+      } finally {
+        await session.endSession();
+      }
     }
     const proposal = await ChordProposalModel.create(record);
     return NextResponse.json(proposal, { status: 201 });
-  } catch (error) { return chordApiError(error); }
+  } catch (error) {
+    return chordApiError(error);
+  }
 }

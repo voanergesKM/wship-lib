@@ -28,6 +28,16 @@ export async function GET(req: Request) {
     if (session.status === "completed" && session.user) {
       const dbUser = session.user;
 
+      if (!dbUser.isActive)
+        return NextResponse.json(
+          { error: "Обліковий запис заблокований" },
+          { status: 403 },
+        );
+      await User.updateOne(
+        { _id: dbUser._id, isActive: true },
+        { $set: { lastLoginAt: new Date(), lastSeenAt: new Date() } },
+      );
+
       const jwtSecret = new TextEncoder().encode(process.env.JWT_SECRET);
       const token = await new SignJWT({
         userId: dbUser._id.toString(),
@@ -65,7 +75,7 @@ export async function GET(req: Request) {
     console.error("Error checking auth status:", err);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

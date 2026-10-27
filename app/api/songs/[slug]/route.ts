@@ -1,3 +1,4 @@
+import { can } from "@/lib/permissions/catalog";
 import { getSongBySlug } from "@/lib/data/songs";
 import { connectDB } from "@/lib/db";
 import { getServerAuth } from "@/lib/serverAuth";
@@ -34,6 +35,11 @@ export async function PATCH(
 
   try {
     const session = await getServerAuth();
+    if (!session.user)
+      return NextResponse.json(
+        { error: "Необхідно авторизуватися" },
+        { status: 401 },
+      );
     const body = await request.json();
     const song = await Song.findOne({ slug });
 
@@ -41,6 +47,16 @@ export async function PATCH(
       return NextResponse.json(
         { error: " пісню не знайдено" },
         { status: 404 },
+      );
+    }
+
+    if (
+      song.createdBy?.toString() !== session.user.id &&
+      !can(session.user, "songs.manage")
+    ) {
+      return NextResponse.json(
+        { error: "Недостатньо прав для редагування пісні" },
+        { status: 403 },
       );
     }
 
@@ -84,7 +100,7 @@ export async function DELETE(
       );
     }
 
-    if (session.user.role !== "admin") {
+    if (!can(session.user, "songs.manage")) {
       return NextResponse.json(
         { message: "Тільки адміністратор може видаляти пісні" },
         { status: 403 },

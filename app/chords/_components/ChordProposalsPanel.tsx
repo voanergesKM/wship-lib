@@ -1,4 +1,6 @@
 "use client";
+
+import { can } from "@/lib/permissions/catalog";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/providers/AuthContext";
@@ -28,7 +30,9 @@ export function ChordProposalsPanel() {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-xl font-semibold">
-        {user.role === "admin" ? "Пропозиції до каталогу" : "Мої пропозиції"}
+        {can(user, "chords.proposals.review")
+          ? "Пропозиції до каталогу"
+          : "Мої пропозиції"}
       </h2>
       {query.isPending && <p role="status">Завантаження пропозицій…</p>}
       {query.error && (
@@ -46,7 +50,7 @@ export function ChordProposalsPanel() {
         <ProposalItem
           key={proposal._id}
           proposal={proposal}
-          isAdmin={user.role === "admin"}
+          isAdmin={can(user, "chords.proposals.review")}
           isAuthor={proposal.userId === user.id}
         />
       ))}

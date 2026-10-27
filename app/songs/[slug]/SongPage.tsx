@@ -1,5 +1,7 @@
 "use client";
 
+import { can } from "@/lib/permissions/catalog";
+
 import { useMemo, useState, useEffect, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -82,7 +84,7 @@ export function SongPage({ slug }: { slug: string }) {
     useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = can(user, "songs.manage");
 
   // Playback structure states
   const [selectedArrangementId, setSelectedArrangementId] = useState<
@@ -160,7 +162,7 @@ export function SongPage({ slug }: { slug: string }) {
 
   const canEdit = useMemo(() => {
     if (!user) return false;
-    if (user.role === "admin") return true;
+    if (can(user, "songs.manage")) return true;
     return Boolean(creatorId && user.id && creatorId === user.id);
   }, [user, creatorId]);
 
@@ -359,7 +361,7 @@ export function SongPage({ slug }: { slug: string }) {
 
   const canManageArrangement = (arr: SongArrangement | null) => {
     if (!user || !arr) return false;
-    if (user.role === "admin") return true;
+    if (can(user, "songs.manage")) return true;
     const createdById =
       typeof arr.createdBy === "object" && arr.createdBy !== null
         ? (arr.createdBy as { _id?: string })._id

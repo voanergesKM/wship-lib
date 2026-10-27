@@ -101,6 +101,12 @@ export async function PATCH(req: Request) {
       dbUser = await User.findOne({ telegramId: String(tgUser.id) });
     }
 
+    if (dbUser && !dbUser.isActive)
+      return NextResponse.json(
+        { error: "Обліковий запис заблокований" },
+        { status: 403 },
+      );
+
     if (dbUser) {
       dbUser.telegramId = String(tgUser.id);
       dbUser.username = tgUser.username || dbUser.username || null;
@@ -114,6 +120,7 @@ export async function PATCH(req: Request) {
     } else {
       const payload = {
         telegramId: String(tgUser.id),
+        permissionProfileId: "user",
         username: tgUser.username || null,
         firstName: tgUser.first_name,
         lastName: tgUser.last_name || null,
@@ -124,6 +131,16 @@ export async function PATCH(req: Request) {
 
       dbUser = await User.create(payload);
     }
+
+    if (!dbUser.isActive)
+      return NextResponse.json(
+        { error: "Обліковий запис заблокований" },
+        { status: 403 },
+      );
+    await User.updateOne(
+      { _id: dbUser._id, isActive: true },
+      { $set: { lastLoginAt: new Date(), lastSeenAt: new Date() } },
+    );
 
     const jwtSecret = new TextEncoder().encode(process.env.JWT_SECRET);
     const token = await new SignJWT({

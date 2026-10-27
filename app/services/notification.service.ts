@@ -3,6 +3,7 @@ import { SongProposal } from "@/models/SongProposal";
 import { Song } from "@/models/Song";
 import { Group } from "@/models/Group";
 import { User, UserDocument } from "@/models/User";
+import { PermissionProfile } from "@/models/PermissionProfile";
 import { sendMessage } from "./telegram.service";
 
 export function getAppBaseUrl(): string {
@@ -74,7 +75,19 @@ export const notificationService = {
         targetUserIds.add(song.createdBy._id.toString());
       }
 
-      const admins = await User.find({ role: "admin", isActive: true });
+      const reviewerProfiles = await PermissionProfile.find({
+        $or: [
+          { _id: "superadmin", isSystem: true },
+          { permissions: "songs.proposals.review" },
+        ],
+      }).distinct("_id");
+      const admins = await User.find({
+        isActive: true,
+        $or: [
+          { permissionProfileId: { $in: reviewerProfiles } },
+          { permissionProfileId: { $in: [null, ""] }, role: "admin" },
+        ],
+      });
       for (const admin of admins) {
         targetUserIds.add(admin._id.toString());
       }

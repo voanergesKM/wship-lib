@@ -1,4 +1,6 @@
 "use client";
+
+import { can } from "@/lib/permissions/catalog";
 import { useAuth } from "@/components/providers/AuthContext";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,7 +65,7 @@ export function VoicingEditorDialog({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = can(user, "chords.manage");
   const template = mode.kind === "edit-voicing" ? mode.template : undefined;
   const [draft, setDraft] = useState<VoicingDraft>(() => ({
     root: String(
