@@ -9,7 +9,8 @@ export interface SongListArrangementItem {
 export interface GroupMember {
   userId: {
     _id: string;
-    firstName: string;
+    firstName?: string;
+    lastName?: string;
     username?: string;
     email?: string;
     photoUrl?: string;
@@ -106,57 +107,80 @@ export const groupsService = {
   },
 
   deleteGroup: (groupId: string) => {
-    return baseFetcher<{ success: boolean; message: string }>(`/groups/${groupId}`, {
-      method: "DELETE",
-    });
+    return baseFetcher<{ success: boolean; message: string }>(
+      `/groups/${groupId}`,
+      {
+        method: "DELETE",
+      },
+    );
   },
 
   getPendingInvitations: () => {
-    return baseFetcher<UserInvitationInfo[]>("/groups/invitations", { method: "GET" });
+    return baseFetcher<UserInvitationInfo[]>("/groups/invitations", {
+      method: "GET",
+    });
   },
 
   acceptInvitation: (groupId: string) => {
-    return baseFetcher<{ success: boolean; message: string }>("/groups/invitations/accept", {
-      method: "POST",
-      body: JSON.stringify({ groupId }),
-    });
+    return baseFetcher<{ success: boolean; message: string }>(
+      "/groups/invitations/accept",
+      {
+        method: "POST",
+        body: JSON.stringify({ groupId }),
+      },
+    );
   },
 
   rejectInvitation: (groupId: string) => {
-    return baseFetcher<{ success: boolean; message: string }>("/groups/invitations/reject", {
-      method: "POST",
-      body: JSON.stringify({ groupId }),
-    });
+    return baseFetcher<{ success: boolean; message: string }>(
+      "/groups/invitations/reject",
+      {
+        method: "POST",
+        body: JSON.stringify({ groupId }),
+      },
+    );
   },
 
   inviteUser: (
     groupId: string,
     type: "telegram" | "email",
     value: string,
-    role: "admin" | "member"
+    role: "admin" | "member",
   ) => {
-    return baseFetcher<{ success: boolean; message: string }>(`/groups/${groupId}/invite`, {
-      method: "POST",
-      body: JSON.stringify({ type, value, role }),
-    });
+    return baseFetcher<{ success: boolean; message: string }>(
+      `/groups/${groupId}/invite`,
+      {
+        method: "POST",
+        body: JSON.stringify({ type, value, role }),
+      },
+    );
   },
 
-  cancelInvitation: (groupId: string, type: "telegram" | "email", value: string) => {
-    return baseFetcher<{ success: boolean; message: string }>(`/groups/${groupId}/invite`, {
-      method: "DELETE",
-      body: JSON.stringify({ type, value }),
-    });
+  cancelInvitation: (
+    groupId: string,
+    type: "telegram" | "email",
+    value: string,
+  ) => {
+    return baseFetcher<{ success: boolean; message: string }>(
+      `/groups/${groupId}/invite`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({ type, value }),
+      },
+    );
   },
 
   removeMember: (groupId: string, memberUserId: string) => {
     return baseFetcher<{ success: boolean; message: string }>(
       `/groups/${groupId}/members/${memberUserId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
   },
 
   getSongLists: (groupId: string) => {
-    return baseFetcher<SongListDetails[]>(`/groups/${groupId}/lists`, { method: "GET" });
+    return baseFetcher<SongListDetails[]>(`/groups/${groupId}/lists`, {
+      method: "GET",
+    });
   },
 
   createSongList: (
@@ -172,13 +196,15 @@ export const groupsService = {
   },
 
   getSongListDetails: (groupId: string, listId: string) => {
-    return baseFetcher<SongListDetails>(`/groups/${groupId}/lists/${listId}`, { method: "GET" });
+    return baseFetcher<SongListDetails>(`/groups/${groupId}/lists/${listId}`, {
+      method: "GET",
+    });
   },
 
   updateSongList: (
     groupId: string,
     listId: string,
-    payload: { name?: string; songs?: string[] }
+    payload: { name?: string; songs?: string[] },
   ) => {
     return baseFetcher<SongListDetails>(`/groups/${groupId}/lists/${listId}`, {
       method: "PATCH",
@@ -189,7 +215,7 @@ export const groupsService = {
   deleteSongList: (groupId: string, listId: string) => {
     return baseFetcher<{ success: boolean; message: string }>(
       `/groups/${groupId}/lists/${listId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
   },
 
@@ -204,7 +230,7 @@ export const groupsService = {
       {
         method: "POST",
         body: JSON.stringify({ songId, arrangementId }),
-      }
+      },
     );
   },
 
@@ -226,7 +252,7 @@ export const groupsService = {
   removeSongFromList: (groupId: string, listId: string, songId: string) => {
     return baseFetcher<{ success: boolean; message: string }>(
       `/groups/${groupId}/lists/${listId}/songs?songId=${songId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
   },
 

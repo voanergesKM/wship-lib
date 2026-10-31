@@ -11,29 +11,65 @@ const listId = "abcdefabcdefabcdefabcdef";
 function load(file, dependencies) {
   const source = ts.transpileModule(
     readFileSync(new URL(`../${file}`, import.meta.url), "utf8"),
-    { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } },
+    {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        jsx: ts.JsxEmit.ReactJSX,
+      },
+    },
   ).outputText;
   const loadedModule = { exports: {} };
-  new Function("require", "module", "exports", source)((name) => {
-    assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
-    return dependencies[name];
-  }, loadedModule, loadedModule.exports);
+  new Function("require", "module", "exports", source)(
+    (name) => {
+      assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
+      return dependencies[name];
+    },
+    loadedModule,
+    loadedModule.exports,
+  );
   return loadedModule.exports;
 }
 
-function readers({ group = { name: "Команда", members: ["private"] }, list = { name: "Неділя", songs: ["private"] } } = {}) {
+function readers({
+  group = { name: "Команда", members: ["private"] },
+  list = { name: "Неділя", songs: ["private"] },
+} = {}) {
   const calls = [];
   const query = (document) => ({
-    select(fields) { assert.equal(fields, "name -_id"); return this; },
-    lean: async () => document ? { name: document.name } : null,
+    select(fields) {
+      assert.equal(fields, "name -_id");
+      return this;
+    },
+    lean: async () => (document ? { name: document.name } : null),
   });
   const data = load("app/lib/data/groupMetadata.ts", {
     "server-only": {},
+    "node:crypto": require("node:crypto"),
     react: { cache: (fn) => fn },
-    mongoose: { isObjectIdOrHexString: (value) => /^[0-9a-f]{24}$/i.test(value) },
+    mongoose: {
+      isObjectIdOrHexString: (value) => /^[0-9a-f]{24}$/i.test(value),
+    },
     "../db": { connectDB: async () => {} },
-    "@/models/Group": { Group: { findById: (value) => { calls.push(["group", value]); return query(group); } } },
-    "@/models/SongList": { SongList: { findOne: (filter) => { calls.push(["list", filter]); return query(list); } } },
+    "@/models/Group": {
+      Group: {
+        findById: (value) => {
+          calls.push(["group", value]);
+          return query(group);
+        },
+        findOne: (filter) => {
+          calls.push(["invite", filter]);
+          return query(group);
+        },
+      },
+    },
+    "@/models/SongList": {
+      SongList: {
+        findOne: (filter) => {
+          calls.push(["list", filter]);
+          return query(list);
+        },
+      },
+    },
   });
   return { ...data, calls };
 }
@@ -41,8 +77,14 @@ function readers({ group = { name: "Команда", members: ["private"] }, lis
 test("public share readers select only names, without members or songs", async () => {
   const data = readers();
   assert.deepEqual(await data.getGroupShareInfo(groupId), { name: "Команда" });
-  assert.deepEqual(await data.getSongListShareInfo(groupId, listId), { name: "Неділя", groupName: "Команда" });
-  assert.deepEqual(data.calls.find(([name]) => name === "list"), ["list", { _id: listId, groupId }]);
+  assert.deepEqual(await data.getSongListShareInfo(groupId, listId), {
+    name: "Неділя",
+    groupName: "Команда",
+  });
+  assert.deepEqual(
+    data.calls.find(([name]) => name === "list"),
+    ["list", { _id: listId, groupId }],
+  );
 });
 
 test("invalid link ids return no metadata and trigger no database query", async () => {
@@ -54,28 +96,40 @@ test("invalid link ids return no metadata and trigger no database query", async 
 });
 
 test("a missing group or a playlist outside the group returns no share details", async () => {
-  assert.equal(await readers({ group: null }).getSongListShareInfo(groupId, listId), null);
-  assert.equal(await readers({ list: null }).getSongListShareInfo(groupId, listId), null);
+  assert.equal(
+    await readers({ group: null }).getSongListShareInfo(groupId, listId),
+    null,
+  );
+  assert.equal(
+    await readers({ list: null }).getSongListShareInfo(groupId, listId),
+    null,
+  );
 });
 
 const metadataHelper = load("app/lib/metadata.ts", {});
 const images = [{ url: "/opengraph-image.webp", width: 1200, height: 630 }];
 function page(list, missing = false) {
-  return load(list ? "app/groups/[groupId]/lists/[listId]/page.tsx" : "app/groups/[groupId]/page.tsx", {
-    "react/jsx-runtime": {},
-    "@tanstack/react-query": {},
-    "@/lib/queryClient": {},
-    "@/lib/serverAuth": {},
-    "@/lib/data/groups": {},
-    "@/lib/queries/groupQueries": {},
-    "./SongListPage": {},
-    "./GroupDetailsPage": {},
-    "@/lib/data/groupMetadata": {
-      getGroupShareInfo: async () => missing ? null : { name: "Команда" },
-      getSongListShareInfo: async () => missing ? null : { name: "Неділя", groupName: "Команда" },
+  return load(
+    list
+      ? "app/groups/[groupId]/lists/[listId]/page.tsx"
+      : "app/groups/[groupId]/page.tsx",
+    {
+      "react/jsx-runtime": {},
+      "@tanstack/react-query": {},
+      "@/lib/queryClient": {},
+      "@/lib/serverAuth": {},
+      "@/lib/data/groups": {},
+      "@/lib/queries/groupQueries": {},
+      "./SongListPage": {},
+      "./GroupDetailsPage": {},
+      "@/lib/data/groupMetadata": {
+        getGroupShareInfo: async () => (missing ? null : { name: "Команда" }),
+        getSongListShareInfo: async () =>
+          missing ? null : { name: "Неділя", groupName: "Команда" },
+      },
+      "@/lib/metadata": metadataHelper,
     },
-    "@/lib/metadata": metadataHelper,
-  });
+  );
 }
 
 for (const isList of [false, true]) {
@@ -90,7 +144,10 @@ for (const isList of [false, true]) {
     assert.equal(metadata.twitter.title, title);
     assert.deepEqual(metadata.openGraph.images, images);
     assert.deepEqual(metadata.twitter.images, images);
-    assert.equal(metadata.openGraph.url, `/groups/${groupId}${isList ? `/lists/${listId}` : ""}`);
+    assert.equal(
+      metadata.openGraph.url,
+      `/groups/${groupId}${isList ? `/lists/${listId}` : ""}`,
+    );
     assert.ok(metadata.description.includes("Команда"));
     if (isList) assert.ok(metadata.description.includes("Неділя"));
   });
@@ -99,10 +156,65 @@ for (const isList of [false, true]) {
 test("missing entities get fallback titles instead of unrelated preview names", async () => {
   for (const isList of [false, true]) {
     const metadata = await page(isList, true).generateMetadata(
-      { params: Promise.resolve({ groupId, listId }) }, Promise.resolve({}),
+      { params: Promise.resolve({ groupId, listId }) },
+      Promise.resolve({}),
     );
-    assert.equal(metadata.title, isList ? "Список пісень не знайдено" : "Групу не знайдено");
+    assert.equal(
+      metadata.title,
+      isList ? "Список пісень не знайдено" : "Групу не знайдено",
+    );
     assert.equal(metadata.openGraph.title, metadata.title);
     assert.deepEqual(metadata.openGraph.images, []);
+  }
+});
+
+test("invitation previews expose only the name for an unexpired hashed token", async () => {
+  const data = readers();
+  const token = "a".repeat(43);
+  assert.deepEqual(await data.getGroupInviteShareInfo(token), {
+    name: "Команда",
+  });
+  const [, filter] = data.calls.find(([name]) => name === "invite");
+  assert.equal(
+    filter["inviteLink.tokenHash"],
+    require("node:crypto").createHash("sha256").update(token).digest("hex"),
+  );
+  assert.ok(filter["inviteLink.expiresAt"].$gt instanceof Date);
+  assert.equal(
+    await readers({ group: null }).getGroupInviteShareInfo(token),
+    null,
+  );
+  const invalid = readers();
+  assert.equal(await invalid.getGroupInviteShareInfo("invalid"), null);
+  assert.deepEqual(invalid.calls, []);
+});
+
+test("invitation metadata supplies Telegram preview data without exposing group details for invalid links", async () => {
+  for (const group of [{ name: "Команда" }, null]) {
+    const invitePage = load("app/invite/[token]/page.tsx", {
+      "node:crypto": require("node:crypto"),
+      "react/jsx-runtime": {},
+      "@/lib/db": {},
+      "@/models/Group": {},
+      "@/lib/serverAuth": {},
+      "@/lib/data/groupMetadata": {
+        getGroupInviteShareInfo: async () => group,
+      },
+      "@/lib/metadata": metadataHelper,
+      "./InvitePage": {},
+    });
+    const token = "a".repeat(43);
+    const result = await invitePage.generateMetadata(
+      { params: Promise.resolve({ token }) },
+      Promise.resolve({ openGraph: { images } }),
+    );
+    assert.equal(result.openGraph.url, `/invite/${token}`);
+    assert.equal(result.openGraph.title, result.title);
+    assert.equal(result.twitter.title, result.title);
+    assert.deepEqual(result.openGraph.images, images);
+    assert.deepEqual(result.robots, { index: false, follow: false });
+    assert.equal(result.referrer, "no-referrer");
+    assert.equal(result.title.includes("Команда"), Boolean(group));
+    assert.equal(result.description.includes("Команда"), Boolean(group));
   }
 });

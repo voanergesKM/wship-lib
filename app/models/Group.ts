@@ -20,7 +20,7 @@ const GroupMemberSchema = new Schema(
       default: "member",
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const GroupInvitationSchema = new Schema(
@@ -50,7 +50,7 @@ const GroupInvitationSchema = new Schema(
       default: Date.now,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const GroupSchema = new Schema(
@@ -68,6 +68,16 @@ const GroupSchema = new Schema(
       type: [GroupInvitationSchema],
       default: [],
     },
+    inviteLink: {
+      type: new Schema(
+        {
+          tokenHash: { type: String, required: true },
+          expiresAt: { type: Date, required: true },
+        },
+        { _id: false },
+      ),
+      select: false,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -76,7 +86,7 @@ const GroupSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export type GroupType = InferSchemaType<typeof GroupSchema>;

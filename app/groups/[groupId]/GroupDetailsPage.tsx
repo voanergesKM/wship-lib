@@ -45,6 +45,7 @@ import {
   groupListsOptions,
 } from "@/lib/queries/groupQueries";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InviteLinkCard } from "./_components/InviteLinkCard";
 
 export function GroupDetailsPage({
   groupId,
@@ -76,7 +77,9 @@ export function GroupDetailsPage({
     error: groupError,
   } = useQuery(groupDetailsOptions(groupId));
 
-  const { data: lists, isLoading: listsLoading } = useQuery(groupListsOptions(groupId));
+  const { data: lists, isLoading: listsLoading } = useQuery(
+    groupListsOptions(groupId),
+  );
 
   // Permissions check
   const currentUserMember = group?.members?.find(
@@ -373,10 +376,18 @@ export function GroupDetailsPage({
                 {group.members.map((member: any) => {
                   const mUser = member.userId;
                   const isCurrent = mUser?._id === userId;
+                  const displayName =
+                    [mUser?.firstName, mUser?.lastName]
+                      .filter(Boolean)
+                      .join(" ") ||
+                    (mUser?.username ? `@${mUser.username}` : mUser?.email) ||
+                    "Невідомий користувач";
 
                   return (
                     <div
-                      key={mUser?._id}
+                      key={
+                        mUser?._id || `missing-${group.members.indexOf(member)}`
+                      }
                       className="p-4 flex items-center justify-between hover:bg-muted/10 transition-colors"
                     >
                       <div className="flex items-center gap-3">
@@ -387,12 +398,12 @@ export function GroupDetailsPage({
                             className="object-cover"
                           />
                           <AvatarFallback className="text-sm font-bold">
-                            {mUser?.firstName?.[0] || "?"}
+                            {displayName[0] || "?"}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-bold text-sm">
-                            {mUser?.firstName || "Гість"}{" "}
+                            {displayName}{" "}
                             {isCurrent && (
                               <span className="text-xs font-normal text-muted-foreground pl-1">
                                 (Ви)
@@ -416,6 +427,7 @@ export function GroupDetailsPage({
                         </span>
 
                         {isAdminOrOwner &&
+                          mUser?._id &&
                           !isCurrent &&
                           member.role !== "owner" && (
                             <Button
@@ -424,7 +436,7 @@ export function GroupDetailsPage({
                               onClick={() => {
                                 if (
                                   confirm(
-                                    `Ви дійсно хочете видалити ${mUser?.firstName} з групи?`,
+                                    `Ви дійсно хочете видалити ${displayName} з групи?`,
                                   )
                                 ) {
                                   removeMember(mUser._id);
@@ -511,114 +523,119 @@ export function GroupDetailsPage({
 
             {/* Invite Form (only for Admin/Owner) */}
             {isAdminOrOwner && (
-              <div className="border rounded-xl p-5 bg-card/50 h-fit space-y-4">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-primary" />
-                  Запросити учасника
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Запросіть користувача за його нікнеймом у Telegram або за
-                  поштовою адресою.
-                </p>
+              <div className="flex flex-col gap-4">
+                <InviteLinkCard groupId={groupId} />
+                <div className="border rounded-xl p-5 bg-card/50 h-fit space-y-4">
+                  <h3 className="font-bold text-lg flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                    Запросити учасника
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Запросіть користувача за його нікнеймом у Telegram або за
+                    поштовою адресою.
+                  </p>
 
-                {errorInvite && (
-                  <div className="bg-destructive/10 border border-destructive/20 text-destructive p-2.5 rounded-lg text-xs font-medium text-center">
-                    {errorInvite}
-                  </div>
-                )}
-
-                {successInvite && (
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-lg text-xs font-medium text-center">
-                    {successInvite}
-                  </div>
-                )}
-
-                <form onSubmit={handleInvite} className="space-y-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Спосіб запрошення</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant={
-                          inviteType === "telegram" ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => {
-                          setInviteType("telegram");
-                          setInviteValue("");
-                        }}
-                      >
-                        Telegram
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={inviteType === "email" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setInviteType("email");
-                          setInviteValue("");
-                        }}
-                      >
-                        Пошта
-                      </Button>
+                  {errorInvite && (
+                    <div className="bg-destructive/10 border border-destructive/20 text-destructive p-2.5 rounded-lg text-xs font-medium text-center">
+                      {errorInvite}
                     </div>
-                  </div>
+                  )}
 
-                  <div className="space-y-1">
-                    <Label htmlFor="invite-value" className="text-xs">
-                      {inviteType === "telegram"
-                        ? "Telegram нікнейм"
-                        : "Email адреса"}
-                    </Label>
-                    <Input
-                      id="invite-value"
-                      placeholder={
-                        inviteType === "telegram"
-                          ? "@username"
-                          : "user@example.com"
-                      }
-                      value={inviteValue}
-                      onChange={(e) => setInviteValue(e.target.value)}
-                      disabled={isInviting}
-                      required
-                    />
-                  </div>
+                  {successInvite && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-lg text-xs font-medium text-center">
+                      {successInvite}
+                    </div>
+                  )}
 
-                  <div className="space-y-1">
-                    <Label htmlFor="invite-role" className="text-xs">
-                      Роль у групі
-                    </Label>
-                    <Select
-                      value={inviteRole}
-                      onValueChange={(value) =>
-                        setInviteRole(value as "admin" | "member")
-                      }
-                      disabled={isInviting}
+                  <form onSubmit={handleInvite} className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Спосіб запрошення</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant={
+                            inviteType === "telegram" ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => {
+                            setInviteType("telegram");
+                            setInviteValue("");
+                          }}
+                        >
+                          Telegram
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={
+                            inviteType === "email" ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => {
+                            setInviteType("email");
+                            setInviteValue("");
+                          }}
+                        >
+                          Пошта
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="invite-value" className="text-xs">
+                        {inviteType === "telegram"
+                          ? "Telegram нікнейм"
+                          : "Email адреса"}
+                      </Label>
+                      <Input
+                        id="invite-value"
+                        placeholder={
+                          inviteType === "telegram"
+                            ? "@username"
+                            : "user@example.com"
+                        }
+                        value={inviteValue}
+                        onChange={(e) => setInviteValue(e.target.value)}
+                        disabled={isInviting}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="invite-role" className="text-xs">
+                        Роль у групі
+                      </Label>
+                      <Select
+                        value={inviteRole}
+                        onValueChange={(value) =>
+                          setInviteRole(value as "admin" | "member")
+                        }
+                        disabled={isInviting}
+                      >
+                        <SelectTrigger id="invite-role" className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Учасник</SelectItem>
+                          <SelectItem value="admin">Адміністратор</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="w-full"
+                      disabled={isInviting || !inviteValue.trim()}
                     >
-                      <SelectTrigger id="invite-role" className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">Учасник</SelectItem>
-                        <SelectItem value="admin">Адміністратор</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="w-full"
-                    disabled={isInviting || !inviteValue.trim()}
-                  >
-                    {isInviting ? (
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                    ) : (
-                      <Send className="h-3 w-3 mr-1" />
-                    )}
-                    Надіслати
-                  </Button>
-                </form>
+                      {isInviting ? (
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      ) : (
+                        <Send className="h-3 w-3 mr-1" />
+                      )}
+                      Надіслати
+                    </Button>
+                  </form>
+                </div>
               </div>
             )}
           </div>

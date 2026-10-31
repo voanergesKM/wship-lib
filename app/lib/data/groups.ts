@@ -12,7 +12,10 @@ import type {
 import { connectDB } from "../db";
 
 export class GroupReadError extends Error {
-  constructor(message: string, readonly status: 403 | 404) {
+  constructor(
+    message: string,
+    readonly status: 403 | 404,
+  ) {
     super(message);
     this.name = "GroupReadError";
   }
@@ -34,7 +37,9 @@ const getAuthorizedGroup = cache(async (groupId: string, userId: string) => {
       toString(): string;
       _id?: { toString(): string };
     } | null;
-    return reference?.toString() === userId || reference?._id?.toString() === userId;
+    return (
+      reference?.toString() === userId || reference?._id?.toString() === userId
+    );
   });
   if (!isMember) throw new GroupReadError("Немає доступу до цієї групи", 403);
   return group;
@@ -43,7 +48,7 @@ const getAuthorizedGroup = cache(async (groupId: string, userId: string) => {
 export async function getMyGroups(userId: string): Promise<GroupData[]> {
   await connectDB();
   const groups = await Group.find({ "members.userId": userId })
-    .populate("members.userId", "firstName username email photoUrl")
+    .populate("members.userId", "firstName lastName username email photoUrl")
     .populate("createdBy", "firstName username")
     .sort({ createdAt: -1 });
   return serialize<GroupData[]>(groups);
@@ -55,7 +60,10 @@ export async function getGroupDetails(
 ): Promise<GroupData> {
   const group = await getAuthorizedGroup(groupId, userId);
   await group.populate([
-    { path: "members.userId", select: "firstName username email photoUrl" },
+    {
+      path: "members.userId",
+      select: "firstName lastName username email photoUrl",
+    },
     { path: "invitations.invitedBy", select: "firstName username" },
     { path: "createdBy", select: "firstName username" },
   ]);
@@ -113,22 +121,29 @@ export async function getPendingInvitations(user: {
   const groups: GroupDocument[] = await Group.find({ $or: conditions })
     .populate("createdBy", "firstName username")
     .populate("invitations.invitedBy", "firstName username");
-  return serialize<UserInvitationInfo[]>(groups.map((group) => {
-    const invite = group.invitations.find((invitation) => {
-      if (invitation.type === "telegram" && username) {
-        return invitation.value.replace(/^@/, "").toLowerCase() ===
-          username.replace(/^@/, "").toLowerCase();
-      }
-      return invitation.type === "email" && !!email &&
-        invitation.value.toLowerCase() === email.toLowerCase();
-    });
-    return {
-      groupId: group._id,
-      groupName: group.name,
-      createdBy: group.createdBy,
-      role: invite?.role || "member",
-      invitedBy: invite?.invitedBy,
-      createdAt: invite?.createdAt,
-    };
-  }));
+  return serialize<UserInvitationInfo[]>(
+    groups.map((group) => {
+      const invite = group.invitations.find((invitation) => {
+        if (invitation.type === "telegram" && username) {
+          return (
+            invitation.value.replace(/^@/, "").toLowerCase() ===
+            username.replace(/^@/, "").toLowerCase()
+          );
+        }
+        return (
+          invitation.type === "email" &&
+          !!email &&
+          invitation.value.toLowerCase() === email.toLowerCase()
+        );
+      });
+      return {
+        groupId: group._id,
+        groupName: group.name,
+        createdBy: group.createdBy,
+        role: invite?.role || "member",
+        invitedBy: invite?.invitedBy,
+        createdAt: invite?.createdAt,
+      };
+    }),
+  );
 }
